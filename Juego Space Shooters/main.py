@@ -3,9 +3,10 @@ import random
 from pygame.locals import *
 
 pygame.init()
-pygame.mixer.init()  
+pygame.mixer.init()
 
 shoot_sound = pygame.mixer.Sound("./sounds/alienshoot1.wav")
+start_sound = pygame.mixer.Sound("./sounds/start.ogg")
 
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -24,12 +25,11 @@ FPS = 60
 font = pygame.font.SysFont("Arial", 36)
 small_font = pygame.font.SysFont("Arial", 24)
 
-
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("./images/DurrrSpaceShip.png")
-        self.image = pygame.transform.scale(self.image, (50, 40)) 
+        self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT - 50)
         self.speed = 5
@@ -45,7 +45,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.y -= self.speed
         if keys[pygame.K_s] and self.rect.bottom < HEIGHT:
             self.rect.y += self.speed
-
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -65,7 +64,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("./images/Asteroid Brown.png")
-        self.image = pygame.transform.scale(self.image, (50, 40)) 
+        self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH - self.rect.width)
         self.rect.y = random.randint(-100, -40)
@@ -77,18 +76,36 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.y = random.randint(-100, -40)
             self.rect.x = random.randint(0, WIDTH - self.rect.width)
 
+def show_start_screen():
+    start_image = pygame.image.load("./images/1-dc990692.png")
+    start_image = pygame.transform.scale(start_image, (WIDTH, HEIGHT))
+
+  
+    alpha = 0
+    screen.fill(BLACK)
+    pygame.display.flip()
+    start_sound.play()  
+
+    while alpha < 255:
+        alpha += 5
+        start_image.set_alpha(alpha)
+        screen.fill(BLACK)
+        screen.blit(start_image, (0, 0))
+        pygame.display.flip()
+        pygame.time.delay(10)
+
+    pygame.time.wait(4000) 
 
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
     screen.blit(message, (WIDTH // 2 - message.get_width() // 2, HEIGHT - 40))
     pygame.display.flip()
-    pygame.time.wait(2000)  
-
+    pygame.time.wait(2000)
 
 def show_main_menu():
     while True:
         screen.fill(BLACK)
-        
+
         title_text = font.render("Space Shooter", True, YELLOW)
         play_text = small_font.render("Presiona Enter para Jugar", True, WHITE)
         exit_text = small_font.render("Presiona Esc para Salir", True, WHITE)
@@ -105,36 +122,7 @@ def show_main_menu():
                 exit()
             if event.type == KEYDOWN:
                 if event.key == K_RETURN:
-                    return True 
-                elif event.key == K_ESCAPE:
-                    pygame.quit()
-                    exit()
-
-def show_pause_menu():
-    while True:
-        screen.fill(BLACK)
-        
-        pause_text = font.render("Pausa", True, YELLOW)
-        continue_text = small_font.render("Presiona C para Continuar", True, WHITE)
-        menu_text = small_font.render("Presiona M para Volver al Menú", True, WHITE)
-        exit_text = small_font.render("Presiona Esc para Salir", True, WHITE)
-
-        screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 4))
-        screen.blit(continue_text, (WIDTH // 2 - continue_text.get_width() // 2, HEIGHT // 2))
-        screen.blit(menu_text, (WIDTH // 2 - menu_text.get_width() // 2, HEIGHT // 1.5))
-        screen.blit(exit_text, (WIDTH // 2 - exit_text.get_width() // 2, HEIGHT // 1.75))
-
-        pygame.display.flip()
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                exit()
-            if event.type == KEYDOWN:
-                if event.key == K_c:
-                    return True  
-                elif event.key == K_m:
-                    return False  
+                    return True
                 elif event.key == K_ESCAPE:
                     pygame.quit()
                     exit()
@@ -168,7 +156,7 @@ def main_game():
                 shoot_sound.play()
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 if not show_pause_menu():
-                    return  
+                    return
 
         player_group.update()
         bullets.update()
@@ -183,20 +171,19 @@ def main_game():
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
         if hits_player:
             player.lives -= 1
-            if player.lives == 0:  
+            if player.lives == 0:
                 game_over = True
                 game_over_text = font.render("GAME OVER", True, RED)
                 screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
                 pygame.display.flip()
-                pygame.time.wait(2000)  
-                return 
+                pygame.time.wait(2000)
+                return
 
         screen.fill(BLACK)
         player_group.draw(screen)
         bullets.draw(screen)
         enemies.draw(screen)
 
-        # Mostrar vidas del jugador
         lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
         screen.blit(lives_text, (10, 50))
 
@@ -206,11 +193,12 @@ def main_game():
         pygame.display.flip()
 
 def run_game():
+    show_start_screen()  
     while True:
-        if show_main_menu(): 
-            main_game() 
+        if show_main_menu():
+            main_game()
         else:
-            break 
+            break
 
 run_game()
 pygame.quit()
