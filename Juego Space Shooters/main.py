@@ -15,15 +15,11 @@ pygame.display.set_caption("Space Shooter")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 
 clock = pygame.time.Clock()
 FPS = 60
 
-font = pygame.font.SysFont("Arial", 36)
-small_font = pygame.font.SysFont("Arial", 24)
 font = pygame.font.SysFont("Arial", 36)
 small_font = pygame.font.SysFont("Arial", 24)
 
@@ -153,63 +149,52 @@ def main_game():
 
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
-
-    speed_multiplier = 0.7
+    
+    score = 0
+    running = True
 
     for _ in range(3):
-        enemy = Enemy(speed_multiplier)
-        enemies.add(enemy)
+        enemies.add(Enemy())
 
-    last_shot = pygame.time.get_ticks()
-    running = True
-    game_over = False
-
-    while running and not game_over:
+    while running:
         clock.tick(FPS)
+        
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
-            if event.type == KEYDOWN and event.key == K_SPACE:
-                now = pygame.time.get_ticks()
-                if now - last_shot > player.shoot_delay:
-                    bullet = Bullet(player.rect.centerx, player.rect.top, player.speed + 2)
-                    bullets.add(bullet)
+            if event.type == KEYDOWN:
+                if event.key == K_SPACE:
+                    bullet_speed = -5 - (score // 150)
+                    bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
                     shoot_sound.play()
-                    last_shot = now
-
-        player_group.update()
+                if event.key == K_ESCAPE:
+                    running = False
+        
+        player_group.update(score)
         bullets.update()
         enemies.update()
-
+        
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for _ in hits:
-            player.score += 10
-            player.update_stats()
-            speed_multiplier = 0.7 + min(player.score // 150 * 0.2, 1.0)
-            enemies.add(Enemy(speed_multiplier))
-
+            score += 10
+            enemies.add(Enemy())
+        
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
         if hits_player:
             player.lives -= 1
             if player.lives == 0:
-                game_over = True
-                game_over_text = font.render("GAME OVER", True, RED)
-                screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
-                pygame.display.flip()
-                pygame.time.wait(2000)
-                return
-
+                running = False
+        
         screen.fill(BLACK)
         player_group.draw(screen)
         bullets.draw(screen)
         enemies.draw(screen)
-
+        
         lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
         screen.blit(lives_text, (10, 50))
-
-        score_text = font.render(f"Puntuación: {player.score}", True, WHITE)
+        score_text = font.render(f"Puntuación: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
-
+        
         pygame.display.flip()
 
 def run_game():
