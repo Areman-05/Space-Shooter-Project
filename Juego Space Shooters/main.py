@@ -147,35 +147,35 @@ def show_main_menu():
                     exit()
 
 def main_game():
-    slow_mode = True
-    player = Player(slow_mode)
-    player_group = pygame.sprite.Group(player)
+    player = Player()
+    player_group = pygame.sprite.Group()
+    player_group.add(player)
+
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
+
+    speed_multiplier = 0.7
+
     for _ in range(3):
-        enemies.add(Enemy(slow_mode))
-    
-    score = 0
+        enemy = Enemy(speed_multiplier)
+        enemies.add(enemy)
+
+    last_shot = pygame.time.get_ticks()
     running = True
-    show_controls_message()
+    game_over = False
 
-    while running:
+    while running and not game_over:
         clock.tick(FPS)
-
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
             if event.type == KEYDOWN and event.key == K_SPACE:
-                bullets.add(Bullet(player.rect.centerx, player.rect.top, slow_mode))
-                shoot_sound.play()
-        
-        if score >= 500 and slow_mode:
-            slow_mode = False
-            player.speed = player.base_speed
-            for enemy in enemies:
-                enemy.speed = enemy.base_speed
-            for bullet in bullets:
-                bullet.speed = bullet.base_speed
+                now = pygame.time.get_ticks()
+                if now - last_shot > player.shoot_delay:
+                    bullet = Bullet(player.rect.centerx, player.rect.top, player.speed + 2)
+                    bullets.add(bullet)
+                    shoot_sound.play()
+                    last_shot = now
 
         player_group.update()
         bullets.update()
@@ -183,26 +183,38 @@ def main_game():
 
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for _ in hits:
-            score += 10
-            enemies.add(Enemy(slow_mode))
+            player.score += 10
+            player.update_stats()
+            speed_multiplier = 0.7 + min(player.score // 150 * 0.2, 1.0)
+            enemies.add(Enemy(speed_multiplier))
+
+        hits_player = pygame.sprite.spritecollide(player, enemies, True)
+        if hits_player:
+            player.lives -= 1
+            if player.lives == 0:
+                game_over = True
+                game_over_text = font.render("GAME OVER", True, RED)
+                screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
+                pygame.display.flip()
+                pygame.time.wait(2000)
+                return
 
         screen.fill(BLACK)
         player_group.draw(screen)
         bullets.draw(screen)
         enemies.draw(screen)
 
-        score_text = font.render(f"Puntuación: {score}", True, WHITE)
+        lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
+        screen.blit(lives_text, (10, 50))
+
+        score_text = font.render(f"Puntuación: {player.score}", True, WHITE)
         screen.blit(score_text, (10, 10))
 
         pygame.display.flip()
 
 def run_game():
-    show_start_screen()
     while True:
-        if show_main_menu():
-            main_game()
-        else:
-            break
+        main_game()
 
 run_game()
 pygame.quit()
