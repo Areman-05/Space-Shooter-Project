@@ -76,25 +76,30 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.y = random.randint(-100, -40)
             self.rect.x = random.randint(0, WIDTH - self.rect.width)
 
-def show_start_screen():
-    start_image = pygame.image.load("./images/1-dc990692.png")
-    start_image = pygame.transform.scale(start_image, (WIDTH, HEIGHT))
-
-    alpha = 0
-    screen.fill(BLACK)
-    pygame.display.flip()
-    start_sound.play()
-
-    while alpha < 255:
-        alpha += 5
-        start_image.set_alpha(alpha)
+def show_main_menu():
+    while True:
         screen.fill(BLACK)
-        screen.blit(start_image, (0, 0))
+        title_text = font.render("Space Shooter", True, YELLOW)
+        play_text = small_font.render("Presiona Enter para Jugar", True, WHITE)
+        exit_text = small_font.render("Presiona Esc para Salir", True, WHITE)
+        
+        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
+        screen.blit(play_text, (WIDTH // 2 - play_text.get_width() // 2, HEIGHT // 2))
+        screen.blit(exit_text, (WIDTH // 2 - exit_text.get_width() // 2, HEIGHT // 1.5))
+        
         pygame.display.flip()
-        pygame.time.delay(10)
-
-    pygame.time.wait(4000)
-
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+            if event.type == KEYDOWN:
+                if event.key == K_RETURN:
+                    return True
+                elif event.key == K_ESCAPE:
+                    pygame.quit()
+                    exit()
+                    
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
     screen.blit(message, (WIDTH // 2 - message.get_width() // 2, HEIGHT - 40))
