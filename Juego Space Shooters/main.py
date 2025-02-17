@@ -32,10 +32,14 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT - 50)
-        self.speed = 5
+        self.base_speed = 3  # Velocidad reducida al inicio
+        self.normal_speed = 5  # Velocidad normal tras 500 puntos
+        self.speed = self.base_speed
         self.lives = 3
 
-    def update(self):
+    def update(self, score):
+        if score >= 500:
+            self.speed = self.normal_speed
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a] and self.rect.left > 0:
             self.rect.x -= self.speed
