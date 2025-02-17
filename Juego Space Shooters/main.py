@@ -106,31 +106,6 @@ def show_controls_message():
     pygame.display.flip()
     pygame.time.wait(2000)
 
-def show_main_menu():
-    while True:
-        screen.fill(BLACK)
-
-        title_text = font.render("Space Shooter", True, YELLOW)
-        play_text = small_font.render("Presiona Enter para Jugar", True, WHITE)
-        exit_text = small_font.render("Presiona Esc para Salir", True, WHITE)
-
-        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
-        screen.blit(play_text, (WIDTH // 2 - play_text.get_width() // 2, HEIGHT // 2))
-        screen.blit(exit_text, (WIDTH // 2 - exit_text.get_width() // 2, HEIGHT // 1.5))
-
-        pygame.display.flip()
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                exit()
-            if event.type == KEYDOWN:
-                if event.key == K_RETURN:
-                    return True
-                elif event.key == K_ESCAPE:
-                    pygame.quit()
-                    exit()
-
 def main_game():
     player = Player()
     player_group = pygame.sprite.Group()
@@ -188,7 +163,11 @@ def main_game():
 
 def run_game():
     while True:
-        main_game()
+        if show_main_menu():
+            main_game()
+        else:
+            break
+    pygame.quit()
+    exit()
 
 run_game()
-pygame.quit()
