@@ -81,17 +81,15 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, slow_mode=True):
+    def __init__(self, speed_multiplier):
         super().__init__()
         self.image = pygame.image.load("./images/Asteroid Brown.png")
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH - self.rect.width)
         self.rect.y = random.randint(-100, -40)
-        self.base_speed = random.randint(3, 6)
-        self.slow_speed = random.randint(1, 3)
-        self.speed = self.slow_speed if slow_mode else self.base_speed
-    
+        self.speed = random.randint(2, 4) * speed_multiplier
+
     def update(self):
         self.rect.y += self.speed
         if self.rect.top > HEIGHT:
