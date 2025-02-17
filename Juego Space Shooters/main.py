@@ -24,6 +24,8 @@ FPS = 60
 
 font = pygame.font.SysFont("Arial", 36)
 small_font = pygame.font.SysFont("Arial", 24)
+font = pygame.font.SysFont("Arial", 36)
+small_font = pygame.font.SysFont("Arial", 24)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, slow_mode=True):
