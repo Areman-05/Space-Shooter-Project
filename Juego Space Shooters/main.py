@@ -26,20 +26,19 @@ font = pygame.font.SysFont("Arial", 36)
 small_font = pygame.font.SysFont("Arial", 24)
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, slow_mode=True):
         super().__init__()
         self.image = pygame.image.load("./images/DurrrSpaceShip.png")
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT - 50)
-        self.base_speed = 3  # Velocidad reducida al inicio
-        self.normal_speed = 5  # Velocidad normal tras 500 puntos
-        self.speed = self.base_speed
+        self.base_speed = 5
+        self.slow_speed = 2
+        self.speed = self.slow_speed if slow_mode else self.base_speed
         self.lives = 3
-
-    def update(self, score):
-        if score >= 500:
-            self.speed = self.normal_speed
+        self.slow_mode = slow_mode
+    
+    def update(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a] and self.rect.left > 0:
             self.rect.x -= self.speed
@@ -51,14 +50,16 @@ class Player(pygame.sprite.Sprite):
             self.rect.y += self.speed
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, slow_shoot):
+    def __init__(self, x, y, slow_mode=True):
         super().__init__()
         self.image = pygame.Surface((5, 10))
         self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = -5 if slow_shoot else -7  # Disparos más lentos al inicio
-
+        self.base_speed = -7
+        self.slow_speed = -3
+        self.speed = self.slow_speed if slow_mode else self.base_speed
+    
     def update(self):
         self.rect.y += self.speed
         if self.rect.bottom < 0:
@@ -72,8 +73,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH - self.rect.width)
         self.rect.y = random.randint(-100, -40)
-        self.speed = random.randint(2, 4) if slow_mode else random.randint(3, 6)
-
+        self.base_speed = random.randint(3, 6)
+        self.slow_speed = random.randint(1, 3)
+        self.speed = self.slow_speed if slow_mode else self.base_speed
+    
     def update(self):
         self.rect.y += self.speed
         if self.rect.top > HEIGHT:
@@ -84,11 +87,10 @@ def show_start_screen():
     start_image = pygame.image.load("./images/1-dc990692.png")
     start_image = pygame.transform.scale(start_image, (WIDTH, HEIGHT))
 
-  
     alpha = 0
     screen.fill(BLACK)
     pygame.display.flip()
-    start_sound.play()  
+    start_sound.play()
 
     while alpha < 255:
         alpha += 5
@@ -98,7 +100,7 @@ def show_start_screen():
         pygame.display.flip()
         pygame.time.delay(10)
 
-    pygame.time.wait(4000) 
+    pygame.time.wait(4000)
 
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
@@ -132,30 +134,35 @@ def show_main_menu():
                     exit()
 
 def main_game():
-    player = Player()
-    player_group = pygame.sprite.Group()
-    player_group.add(player)
-
+    slow_mode = True
+    player = Player(slow_mode)
+    player_group = pygame.sprite.Group(player)
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
-    for _ in range(3):  # Menos asteroides al inicio
-        enemy = Enemy()
-        enemies.add(enemy)
-
+    for _ in range(3):
+        enemies.add(Enemy(slow_mode))
+    
     score = 0
     running = True
-    game_over = False
+    show_controls_message()
 
-    while running and not game_over:
+    while running:
         clock.tick(FPS)
 
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
             if event.type == KEYDOWN and event.key == K_SPACE:
-                bullet = Bullet(player.rect.centerx, player.rect.top, player.slow_mode)
-                bullets.add(bullet)
+                bullets.add(Bullet(player.rect.centerx, player.rect.top, slow_mode))
                 shoot_sound.play()
+        
+        if score >= 500 and slow_mode:
+            slow_mode = False
+            player.speed = player.base_speed
+            for enemy in enemies:
+                enemy.speed = enemy.base_speed
+            for bullet in bullets:
+                bullet.speed = bullet.base_speed
 
         player_group.update()
         bullets.update()
@@ -164,32 +171,12 @@ def main_game():
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for _ in hits:
             score += 10
-            new_enemy = Enemy()
-            enemies.add(new_enemy)
-
-        hits_player = pygame.sprite.spritecollide(player, enemies, True)
-        if hits_player:
-            player.lives -= 1
-            if player.lives == 0:
-                game_over = True
-                game_over_text = font.render("GAME OVER", True, RED)
-                screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
-                pygame.display.flip()
-                pygame.time.wait(2000)
-                return
-
-        if score >= 500 and player.slow_mode:
-            player.upgrade()
-            for enemy in enemies:
-                enemy.speed = random.randint(3, 6)
+            enemies.add(Enemy(slow_mode))
 
         screen.fill(BLACK)
         player_group.draw(screen)
         bullets.draw(screen)
         enemies.draw(screen)
-
-        lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
-        screen.blit(lives_text, (10, 50))
 
         score_text = font.render(f"Puntuación: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
@@ -197,9 +184,12 @@ def main_game():
         pygame.display.flip()
 
 def run_game():
+    show_start_screen()
     while True:
-        main_game()
-        break
+        if show_main_menu():
+            main_game()
+        else:
+            break
 
 run_game()
 pygame.quit()
