@@ -65,14 +65,14 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, slow_mode=True):
         super().__init__()
         self.image = pygame.image.load("./images/Asteroid Brown.png")
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH - self.rect.width)
         self.rect.y = random.randint(-100, -40)
-        self.speed = random.randint(3, 6)
+        self.speed = random.randint(2, 4) if slow_mode else random.randint(3, 6)
 
     def update(self):
         self.rect.y += self.speed
@@ -138,48 +138,50 @@ def main_game():
 
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
-    initial_enemy_count = 3  # Menos enemigos al inicio
-    for _ in range(initial_enemy_count):
-        enemy = Enemy(True)
+    for _ in range(3):  # Menos asteroides al inicio
+        enemy = Enemy()
         enemies.add(enemy)
 
     score = 0
     running = True
-    shoot_cooldown = 500  # Disparos menos frecuentes al inicio
-    last_shot = pygame.time.get_ticks()
+    game_over = False
 
-    while running:
+    while running and not game_over:
         clock.tick(FPS)
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
             if event.type == KEYDOWN and event.key == K_SPACE:
-                now = pygame.time.get_ticks()
-                if now - last_shot > shoot_cooldown:
-                    bullet = Bullet(player.rect.centerx, player.rect.top, score < 500)
-                    bullets.add(bullet)
-                    shoot_sound.play()
-                    last_shot = now
+                bullet = Bullet(player.rect.centerx, player.rect.top, player.slow_mode)
+                bullets.add(bullet)
+                shoot_sound.play()
 
-        if score >= 500:
-            shoot_cooldown = 250  # Velocidad normal de disparo tras 500 puntos
-            if len(enemies) < 7:  # Generar más enemigos tras 500 puntos
-                enemies.add(Enemy(False))
-
-        player.update(score)
+        player_group.update()
         bullets.update()
         enemies.update()
 
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for _ in hits:
             score += 10
-            enemies.add(Enemy(score < 500))
+            new_enemy = Enemy()
+            enemies.add(new_enemy)
 
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
         if hits_player:
             player.lives -= 1
             if player.lives == 0:
+                game_over = True
+                game_over_text = font.render("GAME OVER", True, RED)
+                screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
+                pygame.display.flip()
+                pygame.time.wait(2000)
                 return
+
+        if score >= 500 and player.slow_mode:
+            player.upgrade()
+            for enemy in enemies:
+                enemy.speed = random.randint(3, 6)
 
         screen.fill(BLACK)
         player_group.draw(screen)
@@ -188,18 +190,16 @@ def main_game():
 
         lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
         screen.blit(lives_text, (10, 50))
+
         score_text = font.render(f"Puntuación: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
 
         pygame.display.flip()
 
 def run_game():
-    show_start_screen()  
     while True:
-        if show_main_menu():
-            main_game()
-        else:
-            break
+        main_game()
+        break
 
 run_game()
 pygame.quit()
