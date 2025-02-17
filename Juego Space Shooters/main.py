@@ -138,49 +138,47 @@ def main_game():
 
     bullets = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
-    for _ in range(5):
-        enemy = Enemy()
+    initial_enemy_count = 3  # Menos enemigos al inicio
+    for _ in range(initial_enemy_count):
+        enemy = Enemy(True)
         enemies.add(enemy)
 
     score = 0
     running = True
-    game_over = False
+    shoot_cooldown = 500  # Disparos menos frecuentes al inicio
+    last_shot = pygame.time.get_ticks()
 
-    show_controls_message()
-
-    while running and not game_over:
+    while running:
         clock.tick(FPS)
-
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
             if event.type == KEYDOWN and event.key == K_SPACE:
-                bullet = Bullet(player.rect.centerx, player.rect.top)
-                bullets.add(bullet)
-                shoot_sound.play()
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
-                if not show_pause_menu():
-                    return
+                now = pygame.time.get_ticks()
+                if now - last_shot > shoot_cooldown:
+                    bullet = Bullet(player.rect.centerx, player.rect.top, score < 500)
+                    bullets.add(bullet)
+                    shoot_sound.play()
+                    last_shot = now
 
-        player_group.update()
+        if score >= 500:
+            shoot_cooldown = 250  # Velocidad normal de disparo tras 500 puntos
+            if len(enemies) < 7:  # Generar más enemigos tras 500 puntos
+                enemies.add(Enemy(False))
+
+        player.update(score)
         bullets.update()
         enemies.update()
 
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for _ in hits:
             score += 10
-            new_enemy = Enemy()
-            enemies.add(new_enemy)
+            enemies.add(Enemy(score < 500))
 
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
         if hits_player:
             player.lives -= 1
             if player.lives == 0:
-                game_over = True
-                game_over_text = font.render("GAME OVER", True, RED)
-                screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
-                pygame.display.flip()
-                pygame.time.wait(2000)
                 return
 
         screen.fill(BLACK)
@@ -190,7 +188,6 @@ def main_game():
 
         lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
         screen.blit(lives_text, (10, 50))
-
         score_text = font.render(f"Puntuación: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
 
