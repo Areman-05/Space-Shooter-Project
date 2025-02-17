@@ -28,18 +28,33 @@ font = pygame.font.SysFont("Arial", 36)
 small_font = pygame.font.SysFont("Arial", 24)
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, slow_mode=True):
+    def __init__(self):
         super().__init__()
         self.image = pygame.image.load("./images/DurrrSpaceShip.png")
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT - 50)
-        self.base_speed = 5
-        self.slow_speed = 2
-        self.speed = self.slow_speed if slow_mode else self.base_speed
         self.lives = 3
-        self.slow_mode = slow_mode
-    
+        self.score = 0
+        self.update_stats()
+
+    def update_stats(self):
+        if self.score < 150:
+            self.speed = 3
+            self.shoot_delay = 500
+        elif self.score < 250:
+            self.speed = 4
+            self.shoot_delay = 400
+        elif self.score < 400:
+            self.speed = 5
+            self.shoot_delay = 300
+        elif self.score < 600:
+            self.speed = 6
+            self.shoot_delay = 200
+        else:
+            self.speed = 7
+            self.shoot_delay = 150
+
     def update(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a] and self.rect.left > 0:
