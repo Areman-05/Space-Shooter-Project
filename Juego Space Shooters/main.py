@@ -51,13 +51,13 @@ class Player(pygame.sprite.Sprite):
             self.rect.y += self.speed
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, slow_shoot):
         super().__init__()
         self.image = pygame.Surface((5, 10))
         self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = -7
+        self.speed = -5 if slow_shoot else -7  # Disparos más lentos al inicio
 
     def update(self):
         self.rect.y += self.speed
