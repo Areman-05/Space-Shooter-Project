@@ -4,10 +4,48 @@ import math
 from pygame.locals import *
 
 pygame.init()
-pygame.mixer.init()
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
 
-shoot_sound = pygame.mixer.Sound("./sounds/alienshoot1.wav")
-start_sound = pygame.mixer.Sound("./sounds/start.ogg")
+# Cargar efectos de sonido (con manejo de errores si no existen)
+try:
+    shoot_sound = pygame.mixer.Sound("./sounds/alienshoot1.wav")
+except:
+    shoot_sound = None
+
+try:
+    start_sound = pygame.mixer.Sound("./sounds/start.ogg")
+except:
+    start_sound = None
+
+# Efectos de sonido adicionales (opcionales)
+try:
+    explosion_sound = pygame.mixer.Sound("./sounds/explosion.wav")
+except:
+    explosion_sound = None
+
+try:
+    powerup_sound = pygame.mixer.Sound("./sounds/powerup.wav")
+except:
+    powerup_sound = None
+
+try:
+    shield_sound = pygame.mixer.Sound("./sounds/shield_activate.wav")
+except:
+    shield_sound = None
+
+try:
+    missile_sound = pygame.mixer.Sound("./sounds/missile_launch.wav")
+except:
+    missile_sound = None
+
+try:
+    wave_complete_sound = pygame.mixer.Sound("./sounds/wave_complete.wav")
+except:
+    wave_complete_sound = None
+
+# Música de fondo (opcional)
+menu_music_path = "./sounds/menu_music.ogg"
+game_music_path = "./sounds/game_music.ogg"
 
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -308,6 +346,14 @@ class Star:
         pygame.draw.circle(surface, color, (int(self.x), int(self.y)), self.size)
 
 def show_main_menu():
+    # Reproducir música de menú si existe
+    try:
+        pygame.mixer.music.load(menu_music_path)
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)  # -1 = loop infinito
+    except:
+        pass  # Si no existe el archivo, continuar sin música
+    
     while True:
         screen.fill(BLACK)
         title_text = font.render("Space Shooter", True, YELLOW)
@@ -322,12 +368,17 @@ def show_main_menu():
         
         for event in pygame.event.get():
             if event.type == QUIT:
+                pygame.mixer.music.stop()
                 pygame.quit()
                 exit()
             if event.type == KEYDOWN:
                 if event.key == K_RETURN:
+                    pygame.mixer.music.stop()
+                    if start_sound:
+                        start_sound.play()
                     return True
                 elif event.key == K_ESCAPE:
+                    pygame.mixer.music.stop()
                     pygame.quit()
                     exit()
                     
@@ -338,6 +389,14 @@ def show_controls_message():
     pygame.time.wait(2000)
 
 def main_game():
+    # Reproducir música de juego si existe
+    try:
+        pygame.mixer.music.load(game_music_path)
+        pygame.mixer.music.set_volume(0.4)
+        pygame.mixer.music.play(-1)  # -1 = loop infinito
+    except:
+        pass  # Si no existe el archivo, continuar sin música
+    
     player = Player()
     player_group = pygame.sprite.Group()
     player_group.add(player)
@@ -377,31 +436,39 @@ def main_game():
                         if player.weapon_type == "normal":
                             bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
                             player.shoot_cooldown = 15
-                            shoot_sound.play()
+                            if shoot_sound:
+                                shoot_sound.play()
                             
                         elif player.weapon_type == "rapid":
                             bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
                             player.shoot_cooldown = 5
-                            shoot_sound.play()
+                            if shoot_sound:
+                                shoot_sound.play()
                             
                         elif player.weapon_type == "spread":
                             for angle in [-20, -10, 0, 10, 20]:
                                 bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed, YELLOW, (6, 12), angle))
                             player.shoot_cooldown = 20
-                            shoot_sound.play()
+                            if shoot_sound:
+                                shoot_sound.play()
                             
                         elif player.weapon_type == "laser":
                             bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed * 2, RED, (8, 20)))
                             player.shoot_cooldown = 10
-                            shoot_sound.play()
+                            if shoot_sound:
+                                shoot_sound.play()
                 
                 if event.key == K_m and player.missiles_available > 0 and player.missile_cooldown <= 0:
                     missiles.add(Missile(player.rect.centerx, player.rect.top))
                     player.missiles_available -= 1
                     player.missile_cooldown = 30
-                    shoot_sound.play()
+                    if missile_sound:
+                        missile_sound.play()
+                    elif shoot_sound:
+                        shoot_sound.play()
                     
                 if event.key == K_ESCAPE:
+                    pygame.mixer.music.stop()
                     running = False
         
         # Sistema de ondas
@@ -413,6 +480,9 @@ def main_game():
             wave_message_timer = 180  # 3 segundos
             # Añadir bonus de puntos por completar onda
             score += wave * 50
+            # Sonido de onda completada
+            if wave_complete_sound:
+                wave_complete_sound.play()
         
         # Spawn de enemigos basado en la onda
         if not wave_complete:
@@ -449,6 +519,9 @@ def main_game():
             points = base_points + combo_bonus
             score += points
             enemies_killed_this_wave += 1
+            # Sonido de explosión
+            if explosion_sound:
+                explosion_sound.play()
             # Crear partículas al destruir enemigo
             for _ in range(5):
                 particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, YELLOW))
@@ -466,6 +539,9 @@ def main_game():
         for missile in missile_hits:
             explosion_radius = missile.explode()
             explosions.append(Explosion(missile.rect.centerx, missile.rect.centery, explosion_radius))
+            # Sonido de explosión grande
+            if explosion_sound:
+                explosion_sound.play()
             # Destruir enemigos en el radio de explosión
             for enemy in enemies:
                 dx = enemy.rect.centerx - missile.rect.centerx
@@ -495,16 +571,30 @@ def main_game():
         for powerup in powerup_hits:
             if powerup.power_type == "shield":
                 player.activate_shield(600)
+                if shield_sound:
+                    shield_sound.play()
+                elif powerup_sound:
+                    powerup_sound.play()
             elif powerup.power_type == "speed":
                 player.activate_speed_boost(600)
+                if powerup_sound:
+                    powerup_sound.play()
             elif powerup.power_type == "rapid":
                 player.activate_weapon("rapid", 600)
+                if powerup_sound:
+                    powerup_sound.play()
             elif powerup.power_type == "spread":
                 player.activate_weapon("spread", 600)
+                if powerup_sound:
+                    powerup_sound.play()
             elif powerup.power_type == "laser":
                 player.activate_weapon("laser", 600)
+                if powerup_sound:
+                    powerup_sound.play()
             elif powerup.power_type == "missile":
                 player.add_missiles(3)
+                if powerup_sound:
+                    powerup_sound.play()
         
         # Colisiones jugador-enemigos
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
@@ -512,9 +602,14 @@ def main_game():
             if player.shield_active:
                 player.shield_active = False
                 player.shield_time = 0
+                if explosion_sound:
+                    explosion_sound.play()
             else:
                 player.lives -= 1
+                if explosion_sound:
+                    explosion_sound.play()
                 if player.lives == 0:
+                    pygame.mixer.music.stop()
                     running = False
         
         # Dibujado
