@@ -289,6 +289,24 @@ class Particle:
             alpha = int(255 * (self.life / 20))
             pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
 
+class Star:
+    def __init__(self):
+        self.x = random.randint(0, WIDTH)
+        self.y = random.randint(0, HEIGHT)
+        self.speed = random.uniform(0.5, 2)
+        self.size = random.randint(1, 2)
+        self.brightness = random.randint(150, 255)
+    
+    def update(self, player_speed):
+        self.y += self.speed + player_speed * 0.1
+        if self.y > HEIGHT:
+            self.y = 0
+            self.x = random.randint(0, WIDTH)
+    
+    def draw(self, surface):
+        color = (self.brightness, self.brightness, self.brightness)
+        pygame.draw.circle(surface, color, (int(self.x), int(self.y)), self.size)
+
 def show_main_menu():
     while True:
         screen.fill(BLACK)
@@ -330,11 +348,14 @@ def main_game():
     powerups = pygame.sprite.Group()
     explosions = []
     particles = []
+    stars = [Star() for _ in range(100)]
     
     score = 0
     running = True
     powerup_spawn_timer = 0
     enemy_spawn_timer = 0
+    combo = 0
+    combo_timer = 0
 
     for _ in range(3):
         enemies.add(Enemy())
@@ -403,11 +424,22 @@ def main_game():
         # Colisiones balas-enemigos
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for enemy in hits:
-            score += 10
+            combo += 1
+            combo_timer = 180  # 3 segundos para mantener combo
+            base_points = 10
+            combo_bonus = min(combo * 2, 50)  # Bonus máximo de 50
+            points = base_points + combo_bonus
+            score += points
             # Crear partículas al destruir enemigo
             for _ in range(5):
                 particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, YELLOW))
             enemies.add(Enemy())
+        
+        # Actualizar combo timer
+        if combo_timer > 0:
+            combo_timer -= 1
+        else:
+            combo = 0
         
         # Colisiones misiles-enemigos (explosión)
         missile_hits = pygame.sprite.groupcollide(missiles, enemies, True, False)
@@ -430,6 +462,11 @@ def main_game():
         # Actualizar explosiones y partículas
         explosions = [e for e in explosions if e.update()]
         particles = [p for p in particles if p.update()]
+        
+        # Actualizar estrellas
+        player_speed_factor = player.speed if player.speed_boost_active else player.base_speed
+        for star in stars:
+            star.update(player_speed_factor)
         
         # Colisiones jugador-powerups
         powerup_hits = pygame.sprite.spritecollide(player, powerups, True)
@@ -460,6 +497,11 @@ def main_game():
         
         # Dibujado
         screen.fill(BLACK)
+        
+        # Dibujar estrellas de fondo
+        for star in stars:
+            star.draw(screen)
+        
         player_group.draw(screen)
         player.draw_shield(screen)
         bullets.draw(screen)
@@ -481,6 +523,11 @@ def main_game():
         screen.blit(lives_text, (10, 50))
         score_text = font.render(f"Puntuacion: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
+        
+        # Combo indicator
+        if combo > 1:
+            combo_text = small_font.render(f"COMBO x{combo}!", True, YELLOW)
+            screen.blit(combo_text, (WIDTH // 2 - combo_text.get_width() // 2, 10))
         
         # Indicadores de power-ups
         y_offset = 100
