@@ -356,9 +356,11 @@ def main_game():
     enemy_spawn_timer = 0
     combo = 0
     combo_timer = 0
-
-    for _ in range(3):
-        enemies.add(Enemy())
+    wave = 1
+    enemies_killed_this_wave = 0
+    enemies_per_wave = 10
+    wave_complete = False
+    wave_message_timer = 0
 
     while running:
         clock.tick(FPS)
@@ -402,11 +404,27 @@ def main_game():
                 if event.key == K_ESCAPE:
                     running = False
         
-        # Spawn de enemigos
-        enemy_spawn_timer += 1
-        if enemy_spawn_timer >= max(60 - (score // 200), 20):
-            enemies.add(Enemy())
-            enemy_spawn_timer = 0
+        # Sistema de ondas
+        if enemies_killed_this_wave >= enemies_per_wave and len(enemies) == 0:
+            wave += 1
+            enemies_killed_this_wave = 0
+            enemies_per_wave = 10 + (wave - 1) * 5
+            wave_complete = True
+            wave_message_timer = 180  # 3 segundos
+            # Añadir bonus de puntos por completar onda
+            score += wave * 50
+        
+        # Spawn de enemigos basado en la onda
+        if not wave_complete:
+            enemy_spawn_timer += 1
+            base_spawn_rate = max(60 - (wave * 5), 15)
+            if enemy_spawn_timer >= base_spawn_rate:
+                enemies.add(Enemy())
+                enemy_spawn_timer = 0
+        elif wave_message_timer > 0:
+            wave_message_timer -= 1
+            if wave_message_timer == 0:
+                wave_complete = False
         
         # Spawn de power-ups
         powerup_spawn_timer += 1
@@ -430,10 +448,12 @@ def main_game():
             combo_bonus = min(combo * 2, 50)  # Bonus máximo de 50
             points = base_points + combo_bonus
             score += points
+            enemies_killed_this_wave += 1
             # Crear partículas al destruir enemigo
             for _ in range(5):
                 particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, YELLOW))
-            enemies.add(Enemy())
+            if not wave_complete:
+                enemies.add(Enemy())
         
         # Actualizar combo timer
         if combo_timer > 0:
@@ -453,11 +473,13 @@ def main_game():
                 distance = math.sqrt(dx*dx + dy*dy)
                 if distance <= explosion_radius:
                     score += 10
+                    enemies_killed_this_wave += 1
                     # Crear partículas
                     for _ in range(8):
                         particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, ORANGE))
                     enemy.kill()
-            enemies.add(Enemy())
+            if not wave_complete:
+                enemies.add(Enemy())
         
         # Actualizar explosiones y partículas
         explosions = [e for e in explosions if e.update()]
@@ -524,10 +546,22 @@ def main_game():
         score_text = font.render(f"Puntuacion: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
         
+        # Wave indicator
+        wave_text = small_font.render(f"ONDA {wave}", True, CYAN)
+        screen.blit(wave_text, (WIDTH - wave_text.get_width() - 10, 10))
+        progress_text = tiny_font.render(f"{enemies_killed_this_wave}/{enemies_per_wave}", True, WHITE)
+        screen.blit(progress_text, (WIDTH - progress_text.get_width() - 10, 40))
+        
+        # Wave complete message
+        if wave_message_timer > 0:
+            wave_complete_text = font.render(f"ONDA {wave - 1} COMPLETADA!", True, YELLOW)
+            text_rect = wave_complete_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+            screen.blit(wave_complete_text, text_rect)
+        
         # Combo indicator
         if combo > 1:
             combo_text = small_font.render(f"COMBO x{combo}!", True, YELLOW)
-            screen.blit(combo_text, (WIDTH // 2 - combo_text.get_width() // 2, 10))
+            screen.blit(combo_text, (WIDTH // 2 - combo_text.get_width() // 2, 50))
         
         # Indicadores de power-ups
         y_offset = 100
