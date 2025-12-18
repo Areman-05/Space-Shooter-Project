@@ -287,13 +287,7 @@ class Particle:
     def draw(self, surface):
         if self.life > 0:
             alpha = int(255 * (self.life / 20))
-            if alpha > 0 and self.size > 0:
-                # Crear superficie temporal con alpha para aplicar transparencia
-                temp_surface = pygame.Surface((self.size * 2 + 2, self.size * 2 + 2), pygame.SRCALPHA)
-                color_with_alpha = (*self.color, alpha)
-                pygame.draw.circle(temp_surface, color_with_alpha, 
-                                 (self.size + 1, self.size + 1), self.size)
-                surface.blit(temp_surface, (int(self.x) - self.size - 1, int(self.y) - self.size - 1))
+            pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
 
 class Star:
     def __init__(self):
