@@ -109,12 +109,20 @@ class Player(pygame.sprite.Sprite):
     
     def draw_shield(self, surface):
         if self.shield_active:
-            shield_alpha = int(128 + 127 * math.sin(pygame.time.get_ticks() / 100))
-            shield_surface = pygame.Surface((self.rect.width + 20, self.rect.height + 20), pygame.SRCALPHA)
-            pygame.draw.circle(shield_surface, (0, 200, 255, shield_alpha), 
-                             (self.rect.width // 2 + 10, self.rect.height // 2 + 10), 
-                             max(self.rect.width, self.rect.height) // 2 + 10, 3)
-            surface.blit(shield_surface, (self.rect.x - 10, self.rect.y - 10))
+            time = pygame.time.get_ticks() / 100
+            shield_alpha = int(128 + 127 * math.sin(time))
+            shield_radius = max(self.rect.width, self.rect.height) // 2 + 10
+            shield_surface = pygame.Surface((shield_radius * 2 + 20, shield_radius * 2 + 20), pygame.SRCALPHA)
+            center = (shield_radius + 10, shield_radius + 10)
+            
+            # Círculo exterior pulsante
+            for i in range(3):
+                alpha = int(shield_alpha * (1 - i * 0.3))
+                radius = shield_radius + i * 3 + int(5 * math.sin(time + i))
+                pygame.draw.circle(shield_surface, (0, 200, 255, alpha), center, radius, 2)
+            
+            surface.blit(shield_surface, (self.rect.centerx - shield_radius - 10, 
+                                        self.rect.centery - shield_radius - 10))
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, speed, color=RED, size=(5, 10), angle=0):
@@ -176,7 +184,7 @@ class PowerUp(pygame.sprite.Sprite):
     def __init__(self, power_type):
         super().__init__()
         self.power_type = power_type  # shield, speed, rapid, spread, laser, missile
-        self.image = pygame.Surface((30, 30))
+        self.base_image = pygame.Surface((30, 30), pygame.SRCALPHA)
         
         colors = {
             "shield": CYAN,
@@ -187,19 +195,99 @@ class PowerUp(pygame.sprite.Sprite):
             "missile": ORANGE
         }
         
-        self.image.fill(colors.get(power_type, WHITE))
-        pygame.draw.circle(self.image, WHITE, (15, 15), 12, 2)
+        color = colors.get(power_type, WHITE)
+        pygame.draw.circle(self.base_image, color, (15, 15), 14)
+        pygame.draw.circle(self.base_image, WHITE, (15, 15), 12, 2)
+        pygame.draw.circle(self.base_image, color, (15, 15), 8)
+        
+        self.image = self.base_image.copy()
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH - self.rect.width)
         self.rect.y = random.randint(-100, -40)
         self.speed = 3
         self.rotation = 0
+        self.pulse = 0
 
     def update(self):
         self.rect.y += self.speed
         self.rotation += 5
+        self.pulse += 0.2
         if self.rect.top > HEIGHT:
             self.kill()
+    
+    def draw(self, surface):
+        # Efecto de pulso
+        pulse_size = 1 + 0.1 * math.sin(self.pulse)
+        scaled_image = pygame.transform.scale(self.base_image, 
+                                             (int(30 * pulse_size), int(30 * pulse_size)))
+        rotated_image = pygame.transform.rotate(scaled_image, self.rotation)
+        new_rect = rotated_image.get_rect(center=self.rect.center)
+        surface.blit(rotated_image, new_rect)
+
+class Explosion:
+    def __init__(self, x, y, radius):
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.max_radius = radius
+        self.life = 20
+        self.particles = []
+        for _ in range(15):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(2, 5)
+            self.particles.append({
+                'x': x,
+                'y': y,
+                'vx': speed * math.cos(angle),
+                'vy': speed * math.sin(angle),
+                'life': random.randint(10, 20),
+                'color': random.choice([RED, ORANGE, YELLOW])
+            })
+    
+    def update(self):
+        self.life -= 1
+        self.radius = int(self.max_radius * (self.life / 20))
+        for particle in self.particles:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            particle['life'] -= 1
+        self.particles = [p for p in self.particles if p['life'] > 0]
+        return self.life > 0
+    
+    def draw(self, surface):
+        if self.radius > 0:
+            for i in range(3):
+                alpha = int(255 * (self.life / 20))
+                color = (255, min(100 + i * 50, 255), 0, alpha)
+                pygame.draw.circle(surface, color[:3], (int(self.x), int(self.y)), 
+                                 self.radius - i * 5)
+        for particle in self.particles:
+            if particle['life'] > 0:
+                alpha = int(255 * (particle['life'] / 20))
+                size = max(1, int(3 * (particle['life'] / 20)))
+                pygame.draw.circle(surface, particle['color'], 
+                                 (int(particle['x']), int(particle['y'])), size)
+
+class Particle:
+    def __init__(self, x, y, color):
+        self.x = x
+        self.y = y
+        self.vx = random.uniform(-3, 3)
+        self.vy = random.uniform(-3, 3)
+        self.life = random.randint(10, 20)
+        self.color = color
+        self.size = random.randint(2, 4)
+    
+    def update(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.life -= 1
+        return self.life > 0
+    
+    def draw(self, surface):
+        if self.life > 0:
+            alpha = int(255 * (self.life / 20))
+            pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
 
 def show_main_menu():
     while True:
@@ -240,6 +328,8 @@ def main_game():
     missiles = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     powerups = pygame.sprite.Group()
+    explosions = []
+    particles = []
     
     score = 0
     running = True
@@ -312,14 +402,18 @@ def main_game():
         
         # Colisiones balas-enemigos
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
-        for _ in hits:
+        for enemy in hits:
             score += 10
+            # Crear partículas al destruir enemigo
+            for _ in range(5):
+                particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, YELLOW))
             enemies.add(Enemy())
         
         # Colisiones misiles-enemigos (explosión)
         missile_hits = pygame.sprite.groupcollide(missiles, enemies, True, False)
         for missile in missile_hits:
             explosion_radius = missile.explode()
+            explosions.append(Explosion(missile.rect.centerx, missile.rect.centery, explosion_radius))
             # Destruir enemigos en el radio de explosión
             for enemy in enemies:
                 dx = enemy.rect.centerx - missile.rect.centerx
@@ -327,8 +421,15 @@ def main_game():
                 distance = math.sqrt(dx*dx + dy*dy)
                 if distance <= explosion_radius:
                     score += 10
+                    # Crear partículas
+                    for _ in range(8):
+                        particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, ORANGE))
                     enemy.kill()
             enemies.add(Enemy())
+        
+        # Actualizar explosiones y partículas
+        explosions = [e for e in explosions if e.update()]
+        particles = [p for p in particles if p.update()]
         
         # Colisiones jugador-powerups
         powerup_hits = pygame.sprite.spritecollide(player, powerups, True)
@@ -364,7 +465,16 @@ def main_game():
         bullets.draw(screen)
         missiles.draw(screen)
         enemies.draw(screen)
-        powerups.draw(screen)
+        
+        # Dibujar power-ups con efecto personalizado
+        for powerup in powerups:
+            powerup.draw(screen)
+        
+        # Dibujar explosiones y partículas
+        for explosion in explosions:
+            explosion.draw(screen)
+        for particle in particles:
+            particle.draw(screen)
         
         # UI
         lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
