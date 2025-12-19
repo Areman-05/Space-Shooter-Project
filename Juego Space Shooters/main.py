@@ -1329,9 +1329,7 @@ def main_game():
             missile_text = tiny_font.render(f"MISILES: {player.missiles_available} (M)", True, ORANGE)
             screen.blit(missile_text, (10, y_offset))
         
-        # Instrucciones
-        controls_text = tiny_font.render("ESPACIO: Disparar | M: Misil", True, WHITE)
-        screen.blit(controls_text, (WIDTH - controls_text.get_width() - 10, HEIGHT - 20))
+        # Instrucciones eliminadas - ahora están en la pantalla de comandos
         
         pygame.display.flip()
 
