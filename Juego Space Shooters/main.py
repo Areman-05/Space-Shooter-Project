@@ -1,51 +1,55 @@
 import pygame
 import random
 import math
+import os
 from pygame.locals import *
+
+# Obtener el directorio raíz del proyecto (un nivel arriba del script)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 pygame.init()
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
 
 # Cargar efectos de sonido (con manejo de errores si no existen)
 try:
-    shoot_sound = pygame.mixer.Sound("./sounds/alienshoot1.wav")
+    shoot_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "alienshoot1.wav"))
 except:
     shoot_sound = None
 
 try:
-    start_sound = pygame.mixer.Sound("./sounds/start.ogg")
+    start_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "start.ogg"))
 except:
     start_sound = None
 
 # Efectos de sonido adicionales (opcionales)
 try:
-    explosion_sound = pygame.mixer.Sound("./sounds/explosion.wav")
+    explosion_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "explosion.wav"))
 except:
     explosion_sound = None
 
 try:
-    powerup_sound = pygame.mixer.Sound("./sounds/powerup.wav")
+    powerup_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "powerup.wav"))
 except:
     powerup_sound = None
 
 try:
-    shield_sound = pygame.mixer.Sound("./sounds/shield_activate.wav")
+    shield_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "shield_activate.wav"))
 except:
     shield_sound = None
 
 try:
-    missile_sound = pygame.mixer.Sound("./sounds/missile_launch.wav")
+    missile_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "missile_launch.wav"))
 except:
     missile_sound = None
 
 try:
-    wave_complete_sound = pygame.mixer.Sound("./sounds/wave_complete.wav")
+    wave_complete_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "sounds", "wave_complete.wav"))
 except:
     wave_complete_sound = None
 
 # Música de fondo (opcional)
-menu_music_path = "./sounds/menu_music.ogg"
-game_music_path = "./sounds/game_music.ogg"
+menu_music_path = os.path.join(BASE_DIR, "sounds", "menu_music.ogg")
+game_music_path = os.path.join(BASE_DIR, "sounds", "game_music.ogg")
 
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -71,7 +75,7 @@ tiny_font = pygame.font.SysFont("Arial", 16)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("./images/DurrrSpaceShip.png")
+        self.image = pygame.image.load(os.path.join(BASE_DIR, "images", "DurrrSpaceShip.png"))
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT - 50)
@@ -205,7 +209,7 @@ class Missile(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("./images/Asteroid Brown.png")
+        self.image = pygame.image.load(os.path.join(BASE_DIR, "images", "Asteroid Brown.png"))
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH - self.rect.width)
