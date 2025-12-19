@@ -689,20 +689,76 @@ def show_main_menu():
     except:
         pass  # Si no existe el archivo, continuar sin música
     
-    # Estrellas para el fondo del menú
-    menu_stars = [Star() for _ in range(100)]
+    # Estrellas para el fondo del menú (más estrellas)
+    menu_stars = [Star() for _ in range(150)]
+    
+    # Partículas flotantes para efecto arcade
+    menu_particles = []
+    for _ in range(40):
+        menu_particles.append({
+            'x': random.randint(0, WIDTH),
+            'y': random.randint(0, HEIGHT),
+            'vx': random.uniform(-1.5, 1.5),
+            'vy': random.uniform(-1.5, 1.5),
+            'size': random.randint(2, 5),
+            'color': random.choice([CYAN, YELLOW, GREEN, PURPLE, ORANGE]),
+            'life': random.randint(50, 100),
+            'glow': random.uniform(0, 2 * math.pi)
+        })
+    
+    # Partículas de energía orbitales alrededor del título
+    title_particles = []
+    for _ in range(15):
+        angle = random.uniform(0, 2 * math.pi)
+        title_particles.append({
+            'angle': angle,
+            'radius': random.uniform(80, 120),
+            'speed': random.uniform(0.01, 0.03),
+            'size': random.randint(2, 4),
+            'color': random.choice([CYAN, YELLOW])
+        })
     
     # Variables para animación
     menu_time = 0
     selected_option = 0  # 0 = jugar, 1 = salir
+    option_animations = [0.0, 0.0]  # Animación para cada opción
     
     while True:
         clock.tick(60)
         menu_time += 1
         
-        # Actualizar estrellas
+        # Actualizar estrellas (más rápido)
         for star in menu_stars:
-            star.update(1)
+            star.update(2)
+        
+        # Actualizar partículas flotantes
+        for particle in menu_particles:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            particle['life'] -= 0.5
+            particle['glow'] += 0.05
+            # Rebotar en los bordes
+            if particle['x'] < 0 or particle['x'] > WIDTH:
+                particle['vx'] *= -1
+            if particle['y'] < 0 or particle['y'] > HEIGHT:
+                particle['vy'] *= -1
+            if particle['life'] <= 0:
+                particle['x'] = random.randint(0, WIDTH)
+                particle['y'] = random.randint(0, HEIGHT)
+                particle['life'] = random.randint(50, 100)
+        
+        # Actualizar partículas orbitales del título
+        title_center_x, title_center_y = WIDTH // 2, HEIGHT // 6 + 30
+        for particle in title_particles:
+            particle['angle'] += particle['speed']
+            particle['radius'] += math.sin(menu_time / 100 + particle['angle']) * 0.3
+        
+        # Actualizar animaciones de opciones
+        for i in range(len(option_animations)):
+            if i == selected_option:
+                option_animations[i] += 0.15
+            else:
+                option_animations[i] = max(0, option_animations[i] - 0.1)
         
         # Dibujar fondo
         screen.fill(BLACK)
@@ -711,82 +767,237 @@ def show_main_menu():
         for star in menu_stars:
             star.draw(screen)
         
-        # Título del menú con efecto arcade
+        # Dibujar partículas flotantes con brillo
+        for particle in menu_particles:
+            if particle['life'] > 0:
+                size = int(particle['size'] * (1 + 0.2 * math.sin(particle['glow'])))
+                # Brillo exterior
+                glow_size = size + 3
+                glow_surface = pygame.Surface((glow_size * 2, glow_size * 2), pygame.SRCALPHA)
+                glow_alpha = int(80 * (particle['life'] / 100))
+                glow_color = (*particle['color'], glow_alpha)
+                pygame.draw.circle(glow_surface, glow_color, (glow_size, glow_size), glow_size)
+                screen.blit(glow_surface, (int(particle['x']) - glow_size, int(particle['y']) - glow_size))
+                # Partícula principal
+                pygame.draw.circle(screen, particle['color'], 
+                                 (int(particle['x']), int(particle['y'])), size)
+        
+        # Título del menú con efectos épicos
         title_text = "SPACE SHOOTERS"
         title_y = HEIGHT // 6
         
-        # Efecto de parpadeo para el título
-        blink = int(255 * (0.8 + 0.2 * math.sin(menu_time / 30)))
+        # Efecto de parpadeo mejorado
+        blink = int(255 * (0.8 + 0.2 * math.sin(menu_time / 40)))
+        blink_fast = int(255 * (0.7 + 0.3 * math.sin(menu_time / 15)))
         
-        # Sombra del título
-        for offset_x in range(-2, 3):
-            for offset_y in range(-2, 3):
-                if offset_x != 0 or offset_y != 0:
-                    shadow = arcade_font_medium.render(title_text, True, (0, 0, 0))
-                    screen.blit(shadow, (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
-                                       title_y + offset_y))
+        # Efecto de distorsión sutil
+        wave_offset = int(3 * math.sin(menu_time / 60))
         
-        # Título principal con efecto neón
-        neon_color = (0, blink, 255)
+        # Múltiples capas de sombra para profundidad
+        for layer in range(4, 0, -1):
+            shadow_alpha = 60 + layer * 15
+            for offset_x in range(-layer, layer + 1):
+                for offset_y in range(-layer, layer + 1):
+                    if offset_x != 0 or offset_y != 0:
+                        shadow = arcade_font_medium.render(title_text, True, (0, 0, 0))
+                        shadow_surf = pygame.Surface(shadow.get_size(), pygame.SRCALPHA)
+                        shadow_surf.set_alpha(shadow_alpha)
+                        shadow_surf.blit(shadow, (0, 0))
+                        screen.blit(shadow_surf, 
+                                  (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                   title_y + offset_y + wave_offset))
+        
+        # Dibujar partículas orbitales alrededor del título
+        for particle in title_particles:
+            x = title_center_x + particle['radius'] * math.cos(particle['angle'])
+            y = title_center_y + particle['radius'] * math.sin(particle['angle'])
+            size = particle['size'] + int(2 * math.sin(menu_time / 30 + particle['angle']))
+            # Brillo
+            glow_surface = pygame.Surface((size * 3, size * 3), pygame.SRCALPHA)
+            pygame.draw.circle(glow_surface, (*particle['color'], 120), 
+                             (size * 1.5, size * 1.5), size * 1.5)
+            screen.blit(glow_surface, (int(x) - size * 1.5, int(y) - size * 1.5))
+            pygame.draw.circle(screen, particle['color'], (int(x), int(y)), size)
+        
+        # Capa exterior con efecto arcoíris
+        hue = (menu_time / 3) % 360
+        r = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue))))
+        g = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue + 120))))
+        b = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue + 240))))
+        neon_color = (r, g, b)
+        
+        # Brillo exterior pulsante
+        for i in range(2):
+            glow_alpha = int((80 - i * 30) * (0.5 + 0.5 * math.sin(menu_time / 30)))
+            outer_glow = arcade_font_medium.render(title_text, True, neon_color)
+            glow_surf = pygame.Surface(outer_glow.get_size(), pygame.SRCALPHA)
+            glow_surf.set_alpha(glow_alpha)
+            glow_surf.blit(outer_glow, (0, 0))
+            offset = i * 2
+            screen.blit(glow_surf, 
+                      (WIDTH // 2 - outer_glow.get_width() // 2 - offset, 
+                       title_y - offset + wave_offset))
+        
+        # Título principal
         title_surface = arcade_font_medium.render(title_text, True, neon_color)
-        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, 
+                                   title_y + wave_offset))
         
-        # Brillo interior
+        # Brillo interior intenso
         inner_glow = arcade_font_medium.render(title_text, True, (255, 255, 255))
         glow_surface = pygame.Surface(inner_glow.get_size(), pygame.SRCALPHA)
-        glow_surface.set_alpha(int(blink * 0.3))
+        glow_surface.set_alpha(int(blink_fast * 0.4))
         glow_surface.blit(inner_glow, (0, 0))
-        screen.blit(glow_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        screen.blit(glow_surface, (WIDTH // 2 - title_surface.get_width() // 2, 
+                                   title_y + wave_offset))
         
-        # Opciones del menú
-        play_text = "> JUGAR <" if selected_option == 0 else "  JUGAR  "
-        exit_text = "> SALIR <" if selected_option == 1 else "  SALIR  "
+        # Opciones del menú con botones estilizados
+        play_y = HEIGHT // 2 - 20
+        exit_y = HEIGHT // 2 + 50
         
-        # Efecto de parpadeo para la opción seleccionada
+        # Dibujar botones con efectos
+        button_width = 250
+        button_height = 50
+        button_spacing = 70
+        
+        # Botón JUGAR
+        play_button_x = WIDTH // 2 - button_width // 2
+        play_button_y = play_y - button_height // 2
+        
+        # Efecto de hover/selected
+        play_scale = 1.0 + 0.1 * math.sin(option_animations[0])
+        play_glow_intensity = int(100 + 155 * math.sin(option_animations[0] * 2)) if selected_option == 0 else 50
+        play_glow_intensity = max(0, min(255, play_glow_intensity))
+        
+        # Fondo del botón con efecto neón
+        button_glow_size = int(button_width * play_scale), int(button_height * play_scale)
+        glow_offset_x = (button_glow_size[0] - button_width) // 2
+        glow_offset_y = (button_glow_size[1] - button_height) // 2
+        
+        # Brillo del botón
         if selected_option == 0:
-            option_color = (255, 255, 0) if int(menu_time / 10) % 2 == 0 else (200, 200, 0)
-        else:
-            option_color = WHITE
+            glow_surf = pygame.Surface(button_glow_size, pygame.SRCALPHA)
+            glow_color = (0, play_glow_intensity, 255, play_glow_intensity // 2)
+            pygame.draw.rect(glow_surf, glow_color, (0, 0, button_glow_size[0], button_glow_size[1]))
+            screen.blit(glow_surf, (play_button_x - glow_offset_x, play_button_y - glow_offset_y))
         
-        play_surface = small_font.render(play_text, True, option_color)
-        play_y = HEIGHT // 2 - 30
+        # Fondo del botón (sin border_radius para compatibilidad)
+        button_bg_color = (20, 20, 40) if selected_option == 0 else (15, 15, 25)
+        pygame.draw.rect(screen, button_bg_color, 
+                        (play_button_x, play_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (0, play_glow_intensity, 255), 
+                        (play_button_x, play_button_y, button_width, button_height), 3)
         
-        # Sombra para texto de jugar
-        play_shadow = small_font.render(play_text, True, (0, 0, 0))
-        screen.blit(play_shadow, (WIDTH // 2 - play_surface.get_width() // 2 + 2, play_y + 2))
+        # Texto del botón
+        play_text = "> JUGAR <" if selected_option == 0 else "  JUGAR  "
+        play_color = (255, 255, 0) if selected_option == 0 else (200, 200, 200)
+        play_color = (int(play_color[0] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))),
+                      int(play_color[1] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))),
+                      int(play_color[2] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))))
+        
+        # Sombra del texto
+        for i in range(3):
+            play_shadow = small_font.render(play_text, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(play_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(play_shadow, (0, 0))
+            screen.blit(shadow_surf, 
+                      (WIDTH // 2 - play_shadow.get_width() // 2 + i, 
+                       play_y + i))
+        
+        play_surface = small_font.render(play_text, True, play_color)
         screen.blit(play_surface, (WIDTH // 2 - play_surface.get_width() // 2, play_y))
         
+        # Botón SALIR
+        exit_button_x = WIDTH // 2 - button_width // 2
+        exit_button_y = exit_y - button_height // 2
+        
+        exit_glow_intensity = int(100 + 155 * math.sin(option_animations[1] * 2)) if selected_option == 1 else 50
+        exit_glow_intensity = max(0, min(255, exit_glow_intensity))
+        
+        # Brillo del botón
         if selected_option == 1:
-            option_color = (255, 255, 0) if int(menu_time / 10) % 2 == 0 else (200, 200, 0)
-        else:
-            option_color = WHITE
+            exit_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[1]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[1])))
+            exit_glow_offset_x = (exit_glow_size[0] - button_width) // 2
+            exit_glow_offset_y = (exit_glow_size[1] - button_height) // 2
+            exit_glow_surf = pygame.Surface(exit_glow_size, pygame.SRCALPHA)
+            exit_glow_color = (255, 0, 0, exit_glow_intensity // 2)
+            pygame.draw.rect(exit_glow_surf, exit_glow_color, 
+                           (0, 0, exit_glow_size[0], exit_glow_size[1]))
+            screen.blit(exit_glow_surf, (exit_button_x - exit_glow_offset_x, exit_button_y - exit_glow_offset_y))
         
-        exit_surface = small_font.render(exit_text, True, option_color)
-        exit_y = HEIGHT // 2 + 30
+        # Fondo del botón (sin border_radius para compatibilidad)
+        exit_bg_color = (40, 20, 20) if selected_option == 1 else (25, 15, 15)
+        pygame.draw.rect(screen, exit_bg_color, 
+                        (exit_button_x, exit_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (255, exit_glow_intensity // 2, 0), 
+                        (exit_button_x, exit_button_y, button_width, button_height), 3)
         
-        # Sombra para texto de salir
-        exit_shadow = small_font.render(exit_text, True, (0, 0, 0))
-        screen.blit(exit_shadow, (WIDTH // 2 - exit_surface.get_width() // 2 + 2, exit_y + 2))
+        # Texto del botón
+        exit_text_str = "> SALIR <" if selected_option == 1 else "  SALIR  "
+        exit_color = (255, 100, 100) if selected_option == 1 else (180, 180, 180)
+        exit_color = (int(exit_color[0] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
+                     int(exit_color[1] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
+                     int(exit_color[2] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))))
+        
+        # Sombra del texto
+        for i in range(3):
+            exit_shadow = small_font.render(exit_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(exit_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(exit_shadow, (0, 0))
+            screen.blit(shadow_surf, 
+                      (WIDTH // 2 - exit_shadow.get_width() // 2 + i, 
+                       exit_y + i))
+        
+        exit_surface = small_font.render(exit_text_str, True, exit_color)
         screen.blit(exit_surface, (WIDTH // 2 - exit_surface.get_width() // 2, exit_y))
         
-        # Instrucciones
-        inst_text = "Flechas Arriba/Abajo: Navegar | Enter: Seleccionar"
-        inst_surface = tiny_font.render(inst_text, True, (150, 150, 150))
-        screen.blit(inst_surface, (WIDTH // 2 - inst_surface.get_width() // 2, HEIGHT - 40))
+        # Instrucciones mejoradas
+        inst_text = "Flechas Arriba/Abajo o W/S: Navegar | Enter: Seleccionar | ESC: Salir"
+        inst_alpha = int(120 + 50 * math.sin(menu_time / 60))
+        inst_alpha = max(0, min(255, inst_alpha))
+        inst_color = (inst_alpha, inst_alpha, inst_alpha)
+        inst_surface = tiny_font.render(inst_text, True, inst_color)
+        screen.blit(inst_surface, (WIDTH // 2 - inst_surface.get_width() // 2, HEIGHT - 50))
         
-        # Efectos de borde arcade
-        border_thickness = 2
-        border_color = CYAN
-        border_glow = int(50 + 50 * math.sin(menu_time / 20))
-        border_glow_color = (0, border_glow, border_glow)
+        # Efectos de borde arcade mejorados
+        border_thickness = 3
+        border_glow = int(80 + 100 * math.sin(menu_time / 25))
+        border_glow = max(0, min(255, border_glow))
+        border_glow_color = (0, border_glow, 255)
         
-        # Bordes superiores e inferiores
+        # Bordes superiores e inferiores con efecto de brillo
         pygame.draw.rect(screen, border_glow_color, (0, 0, WIDTH, border_thickness))
         pygame.draw.rect(screen, border_glow_color, (0, HEIGHT - border_thickness, WIDTH, border_thickness))
         
         # Bordes laterales
         pygame.draw.rect(screen, border_glow_color, (0, 0, border_thickness, HEIGHT))
         pygame.draw.rect(screen, border_glow_color, (WIDTH - border_thickness, 0, border_thickness, HEIGHT))
+        
+        # Líneas decorativas en las esquinas
+        corner_length = 30
+        corner_thickness = 2
+        corner_color = (0, border_glow, 255)
+        
+        # Esquinas superiores
+        pygame.draw.line(screen, corner_color, (0, 0), (corner_length, 0), corner_thickness)
+        pygame.draw.line(screen, corner_color, (0, 0), (0, corner_length), corner_thickness)
+        pygame.draw.line(screen, corner_color, (WIDTH, 0), (WIDTH - corner_length, 0), corner_thickness)
+        pygame.draw.line(screen, corner_color, (WIDTH, 0), (WIDTH, corner_length), corner_thickness)
+        
+        # Esquinas inferiores
+        pygame.draw.line(screen, corner_color, (0, HEIGHT), (corner_length, HEIGHT), corner_thickness)
+        pygame.draw.line(screen, corner_color, (0, HEIGHT), (0, HEIGHT - corner_length), corner_thickness)
+        pygame.draw.line(screen, corner_color, (WIDTH, HEIGHT), (WIDTH - corner_length, HEIGHT), corner_thickness)
+        pygame.draw.line(screen, corner_color, (WIDTH, HEIGHT), (WIDTH, HEIGHT - corner_length), corner_thickness)
+        
+        # Efecto de scanlines sutil
+        scanline_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        scanline_offset = (menu_time // 2) % 4
+        for y in range(scanline_offset, HEIGHT, 4):
+            scanline_surface.fill((0, 0, 0, 15), (0, y, WIDTH, 1))
+        screen.blit(scanline_surface, (0, 0))
         
         pygame.display.flip()
         
@@ -798,8 +1009,10 @@ def show_main_menu():
             if event.type == KEYDOWN:
                 if event.key == K_UP or event.key == K_w:
                     selected_option = 0
+                    option_animations[0] = 0
                 elif event.key == K_DOWN or event.key == K_s:
                     selected_option = 1
+                    option_animations[1] = 0
                 elif event.key == K_RETURN:
                     pygame.mixer.music.stop()
                     if start_sound:
