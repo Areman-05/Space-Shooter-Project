@@ -72,6 +72,14 @@ font = pygame.font.SysFont("Arial", 36)
 small_font = pygame.font.SysFont("Arial", 24)
 tiny_font = pygame.font.SysFont("Arial", 16)
 
+# Fuente grande para título arcade
+try:
+    arcade_font_large = pygame.font.Font(None, 72)
+    arcade_font_medium = pygame.font.Font(None, 48)
+except:
+    arcade_font_large = pygame.font.SysFont("Arial", 72)
+    arcade_font_medium = pygame.font.SysFont("Arial", 48)
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -349,6 +357,201 @@ class Star:
         color = (self.brightness, self.brightness, self.brightness)
         pygame.draw.circle(surface, color, (int(self.x), int(self.y)), self.size)
 
+def show_splash_screen():
+    """Pantalla de carga arcade con efectos visuales"""
+    clock_splash = pygame.time.Clock()
+    splash_duration = 3000  # 3 segundos
+    start_time = pygame.time.get_ticks()
+    
+    # Crear estrellas para el fondo
+    splash_stars = [Star() for _ in range(150)]
+    
+    # Partículas para efecto arcade
+    splash_particles = []
+    for _ in range(30):
+        splash_particles.append({
+            'x': random.randint(0, WIDTH),
+            'y': random.randint(0, HEIGHT),
+            'vx': random.uniform(-2, 2),
+            'vy': random.uniform(-2, 2),
+            'size': random.randint(2, 5),
+            'color': random.choice([CYAN, YELLOW, GREEN, PURPLE]),
+            'life': random.randint(30, 60)
+        })
+    
+    # Intentar cargar imagen de fondo
+    background_image = None
+    try:
+        bg_path = os.path.join(BASE_DIR, "images", "astrominer.png")
+        if os.path.exists(bg_path):
+            bg_img = pygame.image.load(bg_path)
+            background_image = pygame.transform.scale(bg_img, (WIDTH, HEIGHT))
+    except:
+        pass
+    
+    running = True
+    while running:
+        current_time = pygame.time.get_ticks()
+        elapsed = current_time - start_time
+        
+        if elapsed >= splash_duration:
+            running = False
+            break
+        
+        clock_splash.tick(60)
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+            if event.type == KEYDOWN or event.type == MOUSEBUTTONDOWN:
+                running = False
+                break
+        
+        # Actualizar estrellas
+        for star in splash_stars:
+            star.update(2)
+        
+        # Actualizar partículas
+        for particle in splash_particles[:]:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            particle['life'] -= 1
+            if particle['life'] <= 0:
+                particle['x'] = random.randint(0, WIDTH)
+                particle['y'] = random.randint(0, HEIGHT)
+                particle['life'] = random.randint(30, 60)
+        
+        # Dibujar fondo
+        screen.fill(BLACK)
+        
+        # Dibujar imagen de fondo si existe (con transparencia)
+        if background_image:
+            alpha = int(50 + 30 * math.sin(elapsed / 200))
+            bg_surface = background_image.copy()
+            bg_surface.set_alpha(alpha)
+            screen.blit(bg_surface, (0, 0))
+        
+        # Dibujar estrellas
+        for star in splash_stars:
+            star.draw(screen)
+        
+        # Dibujar partículas
+        for particle in splash_particles:
+            if particle['life'] > 0:
+                size = particle['size'] + int(2 * math.sin(elapsed / 100))
+                pygame.draw.circle(screen, particle['color'], 
+                                 (int(particle['x']), int(particle['y'])), size)
+        
+        # Efecto de parpadeo arcade
+        blink = int(255 * (0.7 + 0.3 * math.sin(elapsed / 150)))
+        
+        # Título principal "SPACE SHOOTERS" con efecto arcade
+        title_text = "SPACE SHOOTERS"
+        
+        # Crear efecto de texto neón con múltiples capas
+        title_y = HEIGHT // 3
+        
+        # Sombra negra (fondo)
+        for offset_x in range(-3, 4):
+            for offset_y in range(-3, 4):
+                if offset_x != 0 or offset_y != 0:
+                    shadow = arcade_font_large.render(title_text, True, (0, 0, 0))
+                    screen.blit(shadow, (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                       title_y + offset_y))
+        
+        # Capa exterior (brillo)
+        outer_glow = arcade_font_large.render(title_text, True, (blink, blink, 255))
+        screen.blit(outer_glow, (WIDTH // 2 - outer_glow.get_width() // 2, title_y))
+        
+        # Capa principal (color neón)
+        neon_color = (0, blink, blink)
+        main_text = arcade_font_large.render(title_text, True, neon_color)
+        screen.blit(main_text, (WIDTH // 2 - main_text.get_width() // 2, title_y))
+        
+        # Capa interior (brillo intenso)
+        inner_glow = arcade_font_large.render(title_text, True, (255, 255, 255))
+        inner_surface = pygame.Surface(inner_glow.get_size(), pygame.SRCALPHA)
+        inner_surface.set_alpha(int(blink * 0.5))
+        inner_surface.blit(inner_glow, (0, 0))
+        screen.blit(inner_surface, (WIDTH // 2 - main_text.get_width() // 2, title_y))
+        
+        # Efecto de "carga" animado
+        loading_text = "CARGANDO"
+        dots = "." * (int(elapsed / 300) % 4)
+        loading_full = loading_text + dots
+        
+        # Sombra para texto de carga
+        loading_shadow = small_font.render(loading_full, True, (0, 0, 0))
+        screen.blit(loading_shadow, (WIDTH // 2 - loading_shadow.get_width() // 2 + 2, 
+                                    HEIGHT // 2 + 100 + 2))
+        
+        # Texto de carga con efecto parpadeante
+        loading_alpha = int(150 + 105 * math.sin(elapsed / 200))
+        loading_color = (loading_alpha, loading_alpha, loading_alpha)
+        loading_surface = small_font.render(loading_full, True, loading_color)
+        screen.blit(loading_surface, (WIDTH // 2 - loading_surface.get_width() // 2, 
+                                     HEIGHT // 2 + 100))
+        
+        # Barra de carga animada
+        bar_width = 300
+        bar_height = 20
+        bar_x = WIDTH // 2 - bar_width // 2
+        bar_y = HEIGHT // 2 + 150
+        
+        # Fondo de la barra
+        pygame.draw.rect(screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(screen, (100, 100, 100), (bar_x, bar_y, bar_width, bar_height), 2)
+        
+        # Barra de progreso
+        progress = min(elapsed / splash_duration, 1.0)
+        progress_width = int(bar_width * progress)
+        
+        # Efecto de gradiente en la barra
+        for i in range(progress_width):
+            color_intensity = int(255 * (1 - i / bar_width))
+            color = (0, color_intensity, 255)
+            pygame.draw.line(screen, color, 
+                           (bar_x + i, bar_y), 
+                           (bar_x + i, bar_y + bar_height))
+        
+        # Brillo en la barra
+        if progress_width > 0:
+            glow_width = min(20, progress_width)
+            for i in range(glow_width):
+                alpha = int(255 * (1 - i / glow_width))
+                glow_surface = pygame.Surface((1, bar_height), pygame.SRCALPHA)
+                glow_surface.fill((255, 255, 255, alpha))
+                screen.blit(glow_surface, (bar_x + progress_width - i, bar_y))
+        
+        # Efectos de líneas arcade en los bordes
+        line_thickness = 3
+        line_length = 50
+        line_speed = elapsed / 10
+        
+        # Líneas superiores
+        for i in range(0, WIDTH, 100):
+            x = (i + line_speed) % (WIDTH + line_length) - line_length
+            pygame.draw.line(screen, CYAN, (x, 0), (x + line_length, 0), line_thickness)
+            pygame.draw.line(screen, CYAN, (x, HEIGHT - 1), (x + line_length, HEIGHT - 1), line_thickness)
+        
+        # Líneas laterales
+        for i in range(0, HEIGHT, 100):
+            y = (i + line_speed) % (HEIGHT + line_length) - line_length
+            pygame.draw.line(screen, CYAN, (0, y), (0, y + line_length), line_thickness)
+            pygame.draw.line(screen, CYAN, (WIDTH - 1, y), (WIDTH - 1, y + line_length), line_thickness)
+        
+        pygame.display.flip()
+    
+    # Fade out
+    fade_surface = pygame.Surface((WIDTH, HEIGHT))
+    for alpha in range(0, 255, 10):
+        fade_surface.set_alpha(alpha)
+        fade_surface.fill(BLACK)
+        screen.blit(fade_surface, (0, 0))
+        pygame.display.flip()
+        pygame.time.wait(10)
+
 def show_main_menu():
     # Reproducir música de menú si existe
     try:
@@ -358,15 +561,104 @@ def show_main_menu():
     except:
         pass  # Si no existe el archivo, continuar sin música
     
+    # Estrellas para el fondo del menú
+    menu_stars = [Star() for _ in range(100)]
+    
+    # Variables para animación
+    menu_time = 0
+    selected_option = 0  # 0 = jugar, 1 = salir
+    
     while True:
-        screen.fill(BLACK)
-        title_text = font.render("Space Shooter", True, YELLOW)
-        play_text = small_font.render("Presiona Enter para Jugar", True, WHITE)
-        exit_text = small_font.render("Presiona Esc para Salir", True, WHITE)
+        clock.tick(60)
+        menu_time += 1
         
-        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
-        screen.blit(play_text, (WIDTH // 2 - play_text.get_width() // 2, HEIGHT // 2))
-        screen.blit(exit_text, (WIDTH // 2 - exit_text.get_width() // 2, HEIGHT // 1.5))
+        # Actualizar estrellas
+        for star in menu_stars:
+            star.update(1)
+        
+        # Dibujar fondo
+        screen.fill(BLACK)
+        
+        # Dibujar estrellas
+        for star in menu_stars:
+            star.draw(screen)
+        
+        # Título del menú con efecto arcade
+        title_text = "SPACE SHOOTERS"
+        title_y = HEIGHT // 6
+        
+        # Efecto de parpadeo para el título
+        blink = int(255 * (0.8 + 0.2 * math.sin(menu_time / 30)))
+        
+        # Sombra del título
+        for offset_x in range(-2, 3):
+            for offset_y in range(-2, 3):
+                if offset_x != 0 or offset_y != 0:
+                    shadow = arcade_font_medium.render(title_text, True, (0, 0, 0))
+                    screen.blit(shadow, (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                       title_y + offset_y))
+        
+        # Título principal con efecto neón
+        neon_color = (0, blink, 255)
+        title_surface = arcade_font_medium.render(title_text, True, neon_color)
+        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        
+        # Brillo interior
+        inner_glow = arcade_font_medium.render(title_text, True, (255, 255, 255))
+        glow_surface = pygame.Surface(inner_glow.get_size(), pygame.SRCALPHA)
+        glow_surface.set_alpha(int(blink * 0.3))
+        glow_surface.blit(inner_glow, (0, 0))
+        screen.blit(glow_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        
+        # Opciones del menú
+        play_text = "> JUGAR <" if selected_option == 0 else "  JUGAR  "
+        exit_text = "> SALIR <" if selected_option == 1 else "  SALIR  "
+        
+        # Efecto de parpadeo para la opción seleccionada
+        if selected_option == 0:
+            option_color = (255, 255, 0) if int(menu_time / 10) % 2 == 0 else (200, 200, 0)
+        else:
+            option_color = WHITE
+        
+        play_surface = small_font.render(play_text, True, option_color)
+        play_y = HEIGHT // 2 - 30
+        
+        # Sombra para texto de jugar
+        play_shadow = small_font.render(play_text, True, (0, 0, 0))
+        screen.blit(play_shadow, (WIDTH // 2 - play_surface.get_width() // 2 + 2, play_y + 2))
+        screen.blit(play_surface, (WIDTH // 2 - play_surface.get_width() // 2, play_y))
+        
+        if selected_option == 1:
+            option_color = (255, 255, 0) if int(menu_time / 10) % 2 == 0 else (200, 200, 0)
+        else:
+            option_color = WHITE
+        
+        exit_surface = small_font.render(exit_text, True, option_color)
+        exit_y = HEIGHT // 2 + 30
+        
+        # Sombra para texto de salir
+        exit_shadow = small_font.render(exit_text, True, (0, 0, 0))
+        screen.blit(exit_shadow, (WIDTH // 2 - exit_surface.get_width() // 2 + 2, exit_y + 2))
+        screen.blit(exit_surface, (WIDTH // 2 - exit_surface.get_width() // 2, exit_y))
+        
+        # Instrucciones
+        inst_text = "Flechas Arriba/Abajo: Navegar | Enter: Seleccionar"
+        inst_surface = tiny_font.render(inst_text, True, (150, 150, 150))
+        screen.blit(inst_surface, (WIDTH // 2 - inst_surface.get_width() // 2, HEIGHT - 40))
+        
+        # Efectos de borde arcade
+        border_thickness = 2
+        border_color = CYAN
+        border_glow = int(50 + 50 * math.sin(menu_time / 20))
+        border_glow_color = (0, border_glow, border_glow)
+        
+        # Bordes superiores e inferiores
+        pygame.draw.rect(screen, border_glow_color, (0, 0, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, HEIGHT - border_thickness, WIDTH, border_thickness))
+        
+        # Bordes laterales
+        pygame.draw.rect(screen, border_glow_color, (0, 0, border_thickness, HEIGHT))
+        pygame.draw.rect(screen, border_glow_color, (WIDTH - border_thickness, 0, border_thickness, HEIGHT))
         
         pygame.display.flip()
         
@@ -376,11 +668,19 @@ def show_main_menu():
                 pygame.quit()
                 exit()
             if event.type == KEYDOWN:
-                if event.key == K_RETURN:
+                if event.key == K_UP or event.key == K_w:
+                    selected_option = 0
+                elif event.key == K_DOWN or event.key == K_s:
+                    selected_option = 1
+                elif event.key == K_RETURN:
                     pygame.mixer.music.stop()
                     if start_sound:
                         start_sound.play()
-                    return True
+                    if selected_option == 0:
+                        return True
+                    else:
+                        pygame.quit()
+                        exit()
                 elif event.key == K_ESCAPE:
                     pygame.mixer.music.stop()
                     pygame.quit()
@@ -691,6 +991,9 @@ def main_game():
         pygame.display.flip()
 
 def run_game():
+    # Mostrar pantalla de carga al iniciar
+    show_splash_screen()
+    
     while True:
         if show_main_menu():
             main_game()
