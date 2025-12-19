@@ -583,6 +583,7 @@ def show_splash_screen():
         
         # Texto de carga con efecto neón
         loading_alpha = int(150 + 105 * math.sin(elapsed / 150))
+        loading_alpha = max(0, min(255, loading_alpha))  # Asegurar que esté entre 0 y 255
         loading_color = (0, loading_alpha, 255)
         loading_surface = small_font.render(loading_full, True, loading_color)
         screen.blit(loading_surface, (WIDTH // 2 - loading_surface.get_width() // 2, 
@@ -599,6 +600,7 @@ def show_splash_screen():
         pygame.draw.rect(screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
         # Borde neón pulsante
         border_glow = int(100 + 155 * math.sin(elapsed / 100))
+        border_glow = max(0, min(255, border_glow))  # Asegurar que esté entre 0 y 255
         pygame.draw.rect(screen, (0, border_glow, 255), (bar_x, bar_y, bar_width, bar_height), 3)
         
         # Barra de progreso con múltiples efectos
@@ -1031,7 +1033,7 @@ def main_game():
         # Colisiones jugador-enemigos
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
         if hits_player:
-                if player.shield_active:
+            if player.shield_active:
                 player.shield_active = False
                 player.shield_time = 0
                 if explosion_sound:
