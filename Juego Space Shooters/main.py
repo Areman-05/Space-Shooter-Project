@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 import os
+import json
+from datetime import datetime
 from pygame.locals import *
 
 # Obtener el directorio raíz del proyecto (un nivel arriba del script)
@@ -720,8 +722,8 @@ def show_main_menu():
     
     # Variables para animación
     menu_time = 0
-    selected_option = 0  # 0 = jugar, 1 = comandos, 2 = salir
-    option_animations = [0.0, 0.0, 0.0]  # Animación para cada opción
+    selected_option = 0  # 0 = jugar, 1 = comandos, 2 = registro, 3 = salir
+    option_animations = [0.0, 0.0, 0.0, 0.0]  # Animación para cada opción
     
     while True:
         clock.tick(60)
@@ -852,8 +854,9 @@ def show_main_menu():
                                    title_y + wave_offset))
         
         # Opciones del menú con botones estilizados
-        play_y = HEIGHT // 2 - 40
-        commands_y = HEIGHT // 2 + 10
+        play_y = HEIGHT // 2 - 60
+        commands_y = HEIGHT // 2 - 20
+        records_y = HEIGHT // 2 + 20
         exit_y = HEIGHT // 2 + 60
         
         # Dibujar botones con efectos
@@ -967,12 +970,63 @@ def show_main_menu():
         exit_button_x = WIDTH // 2 - button_width // 2
         exit_button_y = exit_y - button_height // 2
         
-        exit_glow_intensity = int(100 + 155 * math.sin(option_animations[2] * 2)) if selected_option == 2 else 50
-        exit_glow_intensity = max(0, min(255, exit_glow_intensity))
+        # Botón REGISTRO
+        records_button_x = WIDTH // 2 - button_width // 2
+        records_button_y = records_y - button_height // 2
+        
+        records_glow_intensity = int(100 + 155 * math.sin(option_animations[2] * 2)) if selected_option == 2 else 50
+        records_glow_intensity = max(0, min(255, records_glow_intensity))
         
         # Brillo del botón
         if selected_option == 2:
-            exit_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[2]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[2])))
+            records_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[2]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[2])))
+            records_glow_offset_x = (records_glow_size[0] - button_width) // 2
+            records_glow_offset_y = (records_glow_size[1] - button_height) // 2
+            records_glow_surf = pygame.Surface(records_glow_size, pygame.SRCALPHA)
+            records_glow_color = (100, 200, 255, records_glow_intensity // 2)
+            pygame.draw.rect(records_glow_surf, records_glow_color, 
+                           (0, 0, records_glow_size[0], records_glow_size[1]))
+            screen.blit(records_glow_surf, (records_button_x - records_glow_offset_x, records_button_y - records_glow_offset_y))
+        
+        # Fondo del botón
+        records_bg_color = (20, 30, 40) if selected_option == 2 else (15, 20, 25)
+        pygame.draw.rect(screen, records_bg_color, 
+                        (records_button_x, records_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (100, records_glow_intensity // 2, 255), 
+                        (records_button_x, records_button_y, button_width, button_height), 3)
+        
+        # Texto del botón
+        records_text_str = "> REGISTRO <" if selected_option == 2 else "  REGISTRO  "
+        records_color = (150, 200, 255) if selected_option == 2 else (180, 180, 180)
+        records_color = (int(records_color[0] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
+                        int(records_color[1] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
+                        int(records_color[2] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))))
+        
+        # Sombra del texto (centrada en el botón)
+        for i in range(3):
+            records_shadow = small_font.render(records_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(records_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(records_shadow, (0, 0))
+            records_shadow_x = records_button_x + (button_width - records_shadow.get_width()) // 2 + i
+            records_shadow_y = records_button_y + (button_height - records_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (records_shadow_x, records_shadow_y))
+        
+        records_surface = small_font.render(records_text_str, True, records_color)
+        records_text_x = records_button_x + (button_width - records_surface.get_width()) // 2
+        records_text_y = records_button_y + (button_height - records_surface.get_height()) // 2
+        screen.blit(records_surface, (records_text_x, records_text_y))
+        
+        # Botón SALIR
+        exit_button_x = WIDTH // 2 - button_width // 2
+        exit_button_y = exit_y - button_height // 2
+        
+        exit_glow_intensity = int(100 + 155 * math.sin(option_animations[3] * 2)) if selected_option == 3 else 50
+        exit_glow_intensity = max(0, min(255, exit_glow_intensity))
+        
+        # Brillo del botón
+        if selected_option == 3:
+            exit_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[3]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[3])))
             exit_glow_offset_x = (exit_glow_size[0] - button_width) // 2
             exit_glow_offset_y = (exit_glow_size[1] - button_height) // 2
             exit_glow_surf = pygame.Surface(exit_glow_size, pygame.SRCALPHA)
@@ -982,18 +1036,18 @@ def show_main_menu():
             screen.blit(exit_glow_surf, (exit_button_x - exit_glow_offset_x, exit_button_y - exit_glow_offset_y))
         
         # Fondo del botón (sin border_radius para compatibilidad)
-        exit_bg_color = (40, 20, 20) if selected_option == 2 else (25, 15, 15)
+        exit_bg_color = (40, 20, 20) if selected_option == 3 else (25, 15, 15)
         pygame.draw.rect(screen, exit_bg_color, 
                         (exit_button_x, exit_button_y, button_width, button_height))
         pygame.draw.rect(screen, (255, exit_glow_intensity // 2, 0), 
                         (exit_button_x, exit_button_y, button_width, button_height), 3)
         
         # Texto del botón
-        exit_text_str = "> SALIR <" if selected_option == 2 else "  SALIR  "
-        exit_color = (255, 100, 100) if selected_option == 2 else (180, 180, 180)
-        exit_color = (int(exit_color[0] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
-                     int(exit_color[1] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
-                     int(exit_color[2] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))))
+        exit_text_str = "> SALIR <" if selected_option == 3 else "  SALIR  "
+        exit_color = (255, 100, 100) if selected_option == 3 else (180, 180, 180)
+        exit_color = (int(exit_color[0] * (0.9 + 0.1 * math.sin(option_animations[3] * 3))),
+                     int(exit_color[1] * (0.9 + 0.1 * math.sin(option_animations[3] * 3))),
+                     int(exit_color[2] * (0.9 + 0.1 * math.sin(option_animations[3] * 3))))
         
         # Sombra del texto (centrada en el botón)
         for i in range(3):
@@ -1058,10 +1112,10 @@ def show_main_menu():
                 exit()
             if event.type == KEYDOWN:
                 if event.key == K_UP or event.key == K_w:
-                    selected_option = (selected_option - 1) % 3
+                    selected_option = (selected_option - 1) % 4
                     option_animations[selected_option] = 0
                 elif event.key == K_DOWN or event.key == K_s:
-                    selected_option = (selected_option + 1) % 3
+                    selected_option = (selected_option + 1) % 4
                     option_animations[selected_option] = 0
                 elif event.key == K_RETURN:
                     pygame.mixer.music.stop()
@@ -1071,6 +1125,8 @@ def show_main_menu():
                         return True
                     elif selected_option == 1:
                         show_commands_menu()
+                    elif selected_option == 2:
+                        show_records_menu()
                     else:
                         pygame.quit()
                         exit()
@@ -1078,6 +1134,287 @@ def show_main_menu():
                     pygame.mixer.music.stop()
                     pygame.quit()
                     exit()
+
+def save_game_record(score, wave, enemies_killed, combo_max):
+    """Guarda un registro de partida en un archivo JSON"""
+    records_file = os.path.join(BASE_DIR, "Juego Space Shooters", "game_records.json")
+    
+    # Cargar registros existentes
+    records = load_game_records()
+    
+    # Crear nuevo registro
+    new_record = {
+        "score": score,
+        "wave": wave,
+        "enemies_killed": enemies_killed,
+        "combo_max": combo_max,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    
+    # Añadir al inicio de la lista
+    records.insert(0, new_record)
+    
+    # Mantener solo las últimas 50 partidas
+    records = records[:50]
+    
+    # Guardar en archivo
+    try:
+        with open(records_file, 'w', encoding='utf-8') as f:
+            json.dump(records, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error guardando registro: {e}")
+
+def load_game_records():
+    """Carga los registros de partidas desde un archivo JSON"""
+    records_file = os.path.join(BASE_DIR, "Juego Space Shooters", "game_records.json")
+    
+    try:
+        if os.path.exists(records_file):
+            with open(records_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error cargando registros: {e}")
+    
+    return []
+
+def show_records_menu():
+    """Pantalla de registro de partidas"""
+    menu_stars = [Star() for _ in range(100)]
+    menu_time = 0
+    back_selected = False
+    scroll_offset = 0
+    scroll_speed = 3
+    
+    # Cargar registros
+    all_records = load_game_records()
+    
+    # Últimas 8 partidas
+    last_8 = all_records[:8] if len(all_records) >= 8 else all_records
+    
+    # Top 5 mejores partidas (por puntuación)
+    top_5 = sorted(all_records, key=lambda x: x.get('score', 0), reverse=True)[:5]
+    
+    # Calcular altura total del contenido
+    line_height = 25
+    section_spacing = 10
+    header_height = 30
+    
+    # Calcular altura: título + últimas 8 + título top 5 + top 5 + botón
+    total_lines = 1 + len(last_8) + 1 + len(top_5) + 2  # +2 para espaciado
+    total_content_height = total_lines * line_height + section_spacing * 3 + header_height * 2
+    
+    while True:
+        clock.tick(60)
+        menu_time += 1
+        
+        # Actualizar estrellas
+        for star in menu_stars:
+            star.update(1)
+        
+        # Dibujar fondo
+        screen.fill(BLACK)
+        
+        # Dibujar estrellas
+        for star in menu_stars:
+            star.draw(screen)
+        
+        # Título
+        title_text = "REGISTRO DE PARTIDAS"
+        title_y = 50
+        
+        # Sombra del título
+        for offset_x in range(-2, 3):
+            for offset_y in range(-2, 3):
+                if offset_x != 0 or offset_y != 0:
+                    shadow = arcade_font_medium.render(title_text, True, (0, 0, 0))
+                    screen.blit(shadow, (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                       title_y + offset_y))
+        
+        # Título principal
+        title_color = (100, 200, 255)
+        title_surface = arcade_font_medium.render(title_text, True, title_color)
+        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        
+        # Caja de información
+        box_x = 40
+        box_y = 110
+        box_width = WIDTH - 80
+        box_height = HEIGHT - 250
+        box_padding = 30
+        
+        # Crear superficie para el contenido scrolleable
+        content_surface = pygame.Surface((box_width - box_padding * 2, total_content_height))
+        content_surface.fill((15, 15, 25))
+        
+        y_offset = 0
+        
+        # Título "Últimas 8 Partidas"
+        last_title = small_font.render("ULTIMAS 8 PARTIDAS:", True, (255, 200, 100))
+        content_surface.blit(last_title, (0, y_offset))
+        y_offset += header_height + section_spacing
+        
+        # Mostrar últimas 8 partidas
+        if last_8:
+            for i, record in enumerate(last_8, 1):
+                score = record.get('score', 0)
+                wave = record.get('wave', 0)
+                enemies = record.get('enemies_killed', 0)
+                combo = record.get('combo_max', 0)
+                date = record.get('date', 'N/A')
+                
+                # Formatear fecha (solo fecha y hora)
+                date_short = date.split()[0] if ' ' in date else date
+                
+                line_text = f"{i}. Puntuacion: {score:,} | Onda: {wave} | Enemigos: {enemies} | Combo: {combo} | {date_short}"
+                text_surface = tiny_font.render(line_text, True, (220, 220, 220))
+                content_surface.blit(text_surface, (10, y_offset))
+                y_offset += line_height
+        else:
+            no_records = tiny_font.render("No hay partidas registradas aun", True, (150, 150, 150))
+            content_surface.blit(no_records, (10, y_offset))
+            y_offset += line_height
+        
+        y_offset += section_spacing
+        
+        # Título "Top 5 Mejores Partidas"
+        top_title = small_font.render("TOP 5 MEJORES PARTIDAS:", True, (255, 200, 100))
+        content_surface.blit(top_title, (0, y_offset))
+        y_offset += header_height + section_spacing
+        
+        # Mostrar top 5
+        if top_5:
+            for i, record in enumerate(top_5, 1):
+                score = record.get('score', 0)
+                wave = record.get('wave', 0)
+                enemies = record.get('enemies_killed', 0)
+                combo = record.get('combo_max', 0)
+                date = record.get('date', 'N/A')
+                
+                # Formatear fecha
+                date_short = date.split()[0] if ' ' in date else date
+                
+                # Color especial para el top 3
+                if i == 1:
+                    color = (255, 215, 0)  # Oro
+                elif i == 2:
+                    color = (192, 192, 192)  # Plata
+                elif i == 3:
+                    color = (205, 127, 50)  # Bronce
+                else:
+                    color = (220, 220, 220)
+                
+                line_text = f"{i}. Puntuacion: {score:,} | Onda: {wave} | Enemigos: {enemies} | Combo: {combo} | {date_short}"
+                text_surface = tiny_font.render(line_text, True, color)
+                content_surface.blit(text_surface, (10, y_offset))
+                y_offset += line_height
+        else:
+            no_records = tiny_font.render("No hay partidas registradas aun", True, (150, 150, 150))
+            content_surface.blit(no_records, (10, y_offset))
+            y_offset += line_height
+        
+        # Fondo de la caja con efecto de profundidad
+        shadow_offset = 5
+        pygame.draw.rect(screen, (0, 0, 0), (box_x + shadow_offset, box_y + shadow_offset, box_width, box_height))
+        pygame.draw.rect(screen, (15, 15, 25), (box_x, box_y, box_width, box_height))
+        pygame.draw.rect(screen, (30, 30, 40), (box_x + 2, box_y + 2, box_width - 4, box_height - 4), 1)
+        box_glow = int(100 + 100 * math.sin(menu_time / 40))
+        box_glow = max(0, min(255, box_glow))
+        pygame.draw.rect(screen, (100, box_glow // 2, 255), (box_x, box_y, box_width, box_height), 4)
+        
+        # Calcular área visible del contenido
+        visible_height = box_height - box_padding * 2
+        max_scroll = max(0, total_content_height - visible_height)
+        scroll_offset = max(0, min(scroll_offset, max_scroll))
+        
+        # Dibujar contenido scrolleable
+        clip_rect = pygame.Rect(box_x + box_padding, box_y + box_padding, box_width - box_padding * 2, visible_height)
+        screen.set_clip(clip_rect)
+        screen.blit(content_surface, (box_x + box_padding, box_y + box_padding - scroll_offset))
+        screen.set_clip(None)
+        
+        # Indicadores de scroll (flechas)
+        if scroll_offset > 0:
+            arrow_y = box_y + 10
+            arrow_points = [(WIDTH // 2, arrow_y), (WIDTH // 2 - 10, arrow_y + 10), (WIDTH // 2 + 10, arrow_y + 10)]
+            pygame.draw.polygon(screen, (100, 200, 255), arrow_points)
+        
+        if scroll_offset < max_scroll:
+            arrow_y = box_y + box_height - 20
+            arrow_points = [(WIDTH // 2, arrow_y + 10), (WIDTH // 2 - 10, arrow_y), (WIDTH // 2 + 10, arrow_y)]
+            pygame.draw.polygon(screen, (100, 200, 255), arrow_points)
+        
+        # Botón Volver al Menú Principal
+        back_button_width = 350
+        back_button_height = 50
+        back_button_x = WIDTH // 2 - back_button_width // 2
+        back_button_y = HEIGHT - 90
+        
+        back_glow_intensity = int(100 + 155 * math.sin(menu_time / 20)) if back_selected else 50
+        back_glow_intensity = max(0, min(255, back_glow_intensity))
+        
+        if back_selected:
+            back_glow_size = int(back_button_width * 1.1), int(back_button_height * 1.1)
+            back_glow_offset_x = (back_glow_size[0] - back_button_width) // 2
+            back_glow_offset_y = (back_glow_size[1] - back_button_height) // 2
+            back_glow_surf = pygame.Surface(back_glow_size, pygame.SRCALPHA)
+            back_glow_color = (0, back_glow_intensity, 255, back_glow_intensity // 2)
+            pygame.draw.rect(back_glow_surf, back_glow_color, 
+                           (0, 0, back_glow_size[0], back_glow_size[1]))
+            screen.blit(back_glow_surf, (back_button_x - back_glow_offset_x, back_button_y - back_glow_offset_y))
+        
+        back_bg_color = (20, 20, 40) if back_selected else (15, 15, 25)
+        pygame.draw.rect(screen, back_bg_color, 
+                        (back_button_x, back_button_y, back_button_width, back_button_height))
+        pygame.draw.rect(screen, (0, back_glow_intensity, 255), 
+                        (back_button_x, back_button_y, back_button_width, back_button_height), 3)
+        
+        back_text = "> VOLVER AL MENU PRINCIPAL <" if back_selected else "  VOLVER AL MENU PRINCIPAL  "
+        back_color = (255, 255, 0) if back_selected else (200, 200, 200)
+        back_surface = small_font.render(back_text, True, back_color)
+        back_text_x = back_button_x + (back_button_width - back_surface.get_width()) // 2
+        back_text_y = back_button_y + (back_button_height - back_surface.get_height()) // 2
+        screen.blit(back_surface, (back_text_x, back_text_y))
+        
+        # Bordes arcade
+        border_thickness = 3
+        border_glow = int(80 + 100 * math.sin(menu_time / 25))
+        border_glow = max(0, min(255, border_glow))
+        border_glow_color = (0, border_glow, 255)
+        
+        pygame.draw.rect(screen, border_glow_color, (0, 0, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, HEIGHT - border_thickness, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, 0, border_thickness, HEIGHT))
+        pygame.draw.rect(screen, border_glow_color, (WIDTH - border_thickness, 0, border_thickness, HEIGHT))
+        
+        pygame.display.flip()
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+            if event.type == KEYDOWN:
+                if event.key == K_RETURN:
+                    if back_selected:
+                        return
+                elif event.key == K_ESCAPE:
+                    return
+                elif event.key == K_UP or event.key == K_w:
+                    if scroll_offset > 0:
+                        scroll_offset = max(0, scroll_offset - scroll_speed * 5)
+                    else:
+                        back_selected = True
+                elif event.key == K_DOWN or event.key == K_s:
+                    if scroll_offset < max_scroll:
+                        scroll_offset = min(max_scroll, scroll_offset + scroll_speed * 5)
+                    else:
+                        back_selected = False
+            if event.type == MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                if (back_button_x <= mouse_x <= back_button_x + back_button_width and
+                    back_button_y <= mouse_y <= back_button_y + back_button_height):
+                    return
+            if event.type == pygame.MOUSEWHEEL:
+                scroll_offset = max(0, min(max_scroll, scroll_offset - event.y * scroll_speed * 10))
 
 def show_commands_menu():
     """Pantalla de comandos con toda la informacion de controles y scroll"""
@@ -1333,9 +1670,11 @@ def main_game():
     powerup_spawn_timer = 0
     enemy_spawn_timer = 0
     combo = 0
+    combo_max = 0
     combo_timer = 0
     wave = 1
     enemies_killed_this_wave = 0
+    total_enemies_killed = 0
     enemies_per_wave = 10
     wave_complete = False
     wave_message_timer = 0
@@ -1432,12 +1771,14 @@ def main_game():
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for enemy in hits:
             combo += 1
+            combo_max = max(combo_max, combo)
             combo_timer = 180  # 3 segundos para mantener combo
             base_points = 10
             combo_bonus = min(combo * 2, 50)  # Bonus máximo de 50
             points = base_points + combo_bonus
             score += points
             enemies_killed_this_wave += 1
+            total_enemies_killed += 1
             # Sonido de explosión (volumen reducido)
             if explosion_sound:
                 explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
@@ -1471,6 +1812,7 @@ def main_game():
                 if distance <= explosion_radius:
                     score += 10
                     enemies_killed_this_wave += 1
+                    total_enemies_killed += 1
                     # Crear partículas
                     for _ in range(8):
                         particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, ORANGE))
@@ -1533,6 +1875,8 @@ def main_game():
                     explosion_sound.play()
                 if player.lives == 0:
                     pygame.mixer.music.stop()
+                    # Guardar registro de la partida
+                    save_game_record(score, wave, total_enemies_killed, combo_max)
                     running = False
         
         # Dibujado
