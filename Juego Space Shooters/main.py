@@ -720,8 +720,8 @@ def show_main_menu():
     
     # Variables para animación
     menu_time = 0
-    selected_option = 0  # 0 = jugar, 1 = salir
-    option_animations = [0.0, 0.0]  # Animación para cada opción
+    selected_option = 0  # 0 = jugar, 1 = comandos, 2 = salir
+    option_animations = [0.0, 0.0, 0.0]  # Animación para cada opción
     
     while True:
         clock.tick(60)
@@ -852,8 +852,9 @@ def show_main_menu():
                                    title_y + wave_offset))
         
         # Opciones del menú con botones estilizados
-        play_y = HEIGHT // 2 - 20
-        exit_y = HEIGHT // 2 + 50
+        play_y = HEIGHT // 2 - 40
+        commands_y = HEIGHT // 2 + 10
+        exit_y = HEIGHT // 2 + 60
         
         # Dibujar botones con efectos
         button_width = 250
@@ -895,29 +896,83 @@ def show_main_menu():
                       int(play_color[1] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))),
                       int(play_color[2] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))))
         
-        # Sombra del texto
+        # Sombra del texto (centrada en el botón)
         for i in range(3):
             play_shadow = small_font.render(play_text, True, (0, 0, 0))
             shadow_surf = pygame.Surface(play_shadow.get_size(), pygame.SRCALPHA)
             shadow_surf.set_alpha(100 - i * 30)
             shadow_surf.blit(play_shadow, (0, 0))
-            screen.blit(shadow_surf, 
-                      (WIDTH // 2 - play_shadow.get_width() // 2 + i, 
-                       play_y + i))
+            shadow_x = play_button_x + (button_width - play_shadow.get_width()) // 2 + i
+            shadow_y = play_button_y + (button_height - play_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (shadow_x, shadow_y))
         
         play_surface = small_font.render(play_text, True, play_color)
-        screen.blit(play_surface, (WIDTH // 2 - play_surface.get_width() // 2, play_y))
+        # Centrar texto dentro del botón (vertical y horizontal)
+        text_x = play_button_x + (button_width - play_surface.get_width()) // 2
+        text_y = play_button_y + (button_height - play_surface.get_height()) // 2
+        screen.blit(play_surface, (text_x, text_y))
         
         # Botón SALIR
         exit_button_x = WIDTH // 2 - button_width // 2
         exit_button_y = exit_y - button_height // 2
         
-        exit_glow_intensity = int(100 + 155 * math.sin(option_animations[1] * 2)) if selected_option == 1 else 50
-        exit_glow_intensity = max(0, min(255, exit_glow_intensity))
+        # Botón COMANDOS
+        commands_button_x = WIDTH // 2 - button_width // 2
+        commands_button_y = commands_y - button_height // 2
+        
+        commands_glow_intensity = int(100 + 155 * math.sin(option_animations[1] * 2)) if selected_option == 1 else 50
+        commands_glow_intensity = max(0, min(255, commands_glow_intensity))
         
         # Brillo del botón
         if selected_option == 1:
-            exit_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[1]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[1])))
+            commands_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[1]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[1])))
+            commands_glow_offset_x = (commands_glow_size[0] - button_width) // 2
+            commands_glow_offset_y = (commands_glow_size[1] - button_height) // 2
+            commands_glow_surf = pygame.Surface(commands_glow_size, pygame.SRCALPHA)
+            commands_glow_color = (255, 165, 0, commands_glow_intensity // 2)
+            pygame.draw.rect(commands_glow_surf, commands_glow_color, 
+                           (0, 0, commands_glow_size[0], commands_glow_size[1]))
+            screen.blit(commands_glow_surf, (commands_button_x - commands_glow_offset_x, commands_button_y - commands_glow_offset_y))
+        
+        # Fondo del botón
+        commands_bg_color = (40, 30, 20) if selected_option == 1 else (25, 20, 15)
+        pygame.draw.rect(screen, commands_bg_color, 
+                        (commands_button_x, commands_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (255, commands_glow_intensity // 2, 0), 
+                        (commands_button_x, commands_button_y, button_width, button_height), 3)
+        
+        # Texto del botón
+        commands_text_str = "> COMANDOS <" if selected_option == 1 else "  COMANDOS  "
+        commands_color = (255, 200, 100) if selected_option == 1 else (180, 180, 180)
+        commands_color = (int(commands_color[0] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
+                         int(commands_color[1] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
+                         int(commands_color[2] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))))
+        
+        # Sombra del texto (centrada en el botón)
+        for i in range(3):
+            commands_shadow = small_font.render(commands_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(commands_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(commands_shadow, (0, 0))
+            commands_shadow_x = commands_button_x + (button_width - commands_shadow.get_width()) // 2 + i
+            commands_shadow_y = commands_button_y + (button_height - commands_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (commands_shadow_x, commands_shadow_y))
+        
+        commands_surface = small_font.render(commands_text_str, True, commands_color)
+        commands_text_x = commands_button_x + (button_width - commands_surface.get_width()) // 2
+        commands_text_y = commands_button_y + (button_height - commands_surface.get_height()) // 2
+        screen.blit(commands_surface, (commands_text_x, commands_text_y))
+        
+        # Botón SALIR
+        exit_button_x = WIDTH // 2 - button_width // 2
+        exit_button_y = exit_y - button_height // 2
+        
+        exit_glow_intensity = int(100 + 155 * math.sin(option_animations[2] * 2)) if selected_option == 2 else 50
+        exit_glow_intensity = max(0, min(255, exit_glow_intensity))
+        
+        # Brillo del botón
+        if selected_option == 2:
+            exit_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[2]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[2])))
             exit_glow_offset_x = (exit_glow_size[0] - button_width) // 2
             exit_glow_offset_y = (exit_glow_size[1] - button_height) // 2
             exit_glow_surf = pygame.Surface(exit_glow_size, pygame.SRCALPHA)
@@ -927,39 +982,34 @@ def show_main_menu():
             screen.blit(exit_glow_surf, (exit_button_x - exit_glow_offset_x, exit_button_y - exit_glow_offset_y))
         
         # Fondo del botón (sin border_radius para compatibilidad)
-        exit_bg_color = (40, 20, 20) if selected_option == 1 else (25, 15, 15)
+        exit_bg_color = (40, 20, 20) if selected_option == 2 else (25, 15, 15)
         pygame.draw.rect(screen, exit_bg_color, 
                         (exit_button_x, exit_button_y, button_width, button_height))
         pygame.draw.rect(screen, (255, exit_glow_intensity // 2, 0), 
                         (exit_button_x, exit_button_y, button_width, button_height), 3)
         
         # Texto del botón
-        exit_text_str = "> SALIR <" if selected_option == 1 else "  SALIR  "
-        exit_color = (255, 100, 100) if selected_option == 1 else (180, 180, 180)
-        exit_color = (int(exit_color[0] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
-                     int(exit_color[1] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
-                     int(exit_color[2] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))))
+        exit_text_str = "> SALIR <" if selected_option == 2 else "  SALIR  "
+        exit_color = (255, 100, 100) if selected_option == 2 else (180, 180, 180)
+        exit_color = (int(exit_color[0] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
+                     int(exit_color[1] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
+                     int(exit_color[2] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))))
         
-        # Sombra del texto
+        # Sombra del texto (centrada en el botón)
         for i in range(3):
             exit_shadow = small_font.render(exit_text_str, True, (0, 0, 0))
             shadow_surf = pygame.Surface(exit_shadow.get_size(), pygame.SRCALPHA)
             shadow_surf.set_alpha(100 - i * 30)
             shadow_surf.blit(exit_shadow, (0, 0))
-            screen.blit(shadow_surf, 
-                      (WIDTH // 2 - exit_shadow.get_width() // 2 + i, 
-                       exit_y + i))
+            exit_shadow_x = exit_button_x + (button_width - exit_shadow.get_width()) // 2 + i
+            exit_shadow_y = exit_button_y + (button_height - exit_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (exit_shadow_x, exit_shadow_y))
         
         exit_surface = small_font.render(exit_text_str, True, exit_color)
-        screen.blit(exit_surface, (WIDTH // 2 - exit_surface.get_width() // 2, exit_y))
-        
-        # Instrucciones mejoradas
-        inst_text = "Flechas Arriba/Abajo o W/S: Navegar | Enter: Seleccionar | ESC: Salir"
-        inst_alpha = int(120 + 50 * math.sin(menu_time / 60))
-        inst_alpha = max(0, min(255, inst_alpha))
-        inst_color = (inst_alpha, inst_alpha, inst_alpha)
-        inst_surface = tiny_font.render(inst_text, True, inst_color)
-        screen.blit(inst_surface, (WIDTH // 2 - inst_surface.get_width() // 2, HEIGHT - 50))
+        # Centrar texto dentro del botón (vertical y horizontal)
+        exit_text_x = exit_button_x + (button_width - exit_surface.get_width()) // 2
+        exit_text_y = exit_button_y + (button_height - exit_surface.get_height()) // 2
+        screen.blit(exit_surface, (exit_text_x, exit_text_y))
         
         # Efectos de borde arcade mejorados
         border_thickness = 3
@@ -1008,17 +1058,19 @@ def show_main_menu():
                 exit()
             if event.type == KEYDOWN:
                 if event.key == K_UP or event.key == K_w:
-                    selected_option = 0
-                    option_animations[0] = 0
+                    selected_option = (selected_option - 1) % 3
+                    option_animations[selected_option] = 0
                 elif event.key == K_DOWN or event.key == K_s:
-                    selected_option = 1
-                    option_animations[1] = 0
+                    selected_option = (selected_option + 1) % 3
+                    option_animations[selected_option] = 0
                 elif event.key == K_RETURN:
                     pygame.mixer.music.stop()
                     if start_sound:
                         start_sound.play()
                     if selected_option == 0:
                         return True
+                    elif selected_option == 1:
+                        show_commands_menu()
                     else:
                         pygame.quit()
                         exit()
@@ -1026,6 +1078,163 @@ def show_main_menu():
                     pygame.mixer.music.stop()
                     pygame.quit()
                     exit()
+
+def show_commands_menu():
+    """Pantalla de comandos con toda la informacion de controles"""
+    menu_stars = [Star() for _ in range(100)]
+    menu_time = 0
+    back_selected = False
+    
+    while True:
+        clock.tick(60)
+        menu_time += 1
+        
+        # Actualizar estrellas
+        for star in menu_stars:
+            star.update(1)
+        
+        # Dibujar fondo
+        screen.fill(BLACK)
+        
+        # Dibujar estrellas
+        for star in menu_stars:
+            star.draw(screen)
+        
+        # Titulo
+        title_text = "COMANDOS"
+        title_y = 50
+        blink = int(255 * (0.8 + 0.2 * math.sin(menu_time / 30)))
+        
+        # Sombra del titulo
+        for offset_x in range(-2, 3):
+            for offset_y in range(-2, 3):
+                if offset_x != 0 or offset_y != 0:
+                    shadow = arcade_font_medium.render(title_text, True, (0, 0, 0))
+                    screen.blit(shadow, (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                       title_y + offset_y))
+        
+        # Titulo principal
+        title_color = (255, 165, 0)
+        title_surface = arcade_font_medium.render(title_text, True, title_color)
+        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        
+        # Caja de informacion
+        box_x = 50
+        box_y = 120
+        box_width = WIDTH - 100
+        box_height = HEIGHT - 280
+        box_padding = 20
+        
+        # Fondo de la caja
+        pygame.draw.rect(screen, (20, 20, 30), (box_x, box_y, box_width, box_height))
+        box_glow = int(100 + 100 * math.sin(menu_time / 40))
+        box_glow = max(0, min(255, box_glow))
+        pygame.draw.rect(screen, (255, box_glow // 2, 0), (box_x, box_y, box_width, box_height), 3)
+        
+        # Informacion de comandos
+        commands_info = [
+            "MOVIMIENTO:",
+            "  W / Flecha Arriba - Mover arriba",
+            "  S / Flecha Abajo - Mover abajo",
+            "  A / Flecha Izquierda - Mover izquierda",
+            "  D / Flecha Derecha - Mover derecha",
+            "",
+            "ACCIONES:",
+            "  ESPACIO - Disparar",
+            "  M - Lanzar misil",
+            "",
+            "POWER-UPS:",
+            "  Recoge los power-ups que caen para obtener:",
+            "  - Escudo (Cyan) - Proteccion temporal",
+            "  - Velocidad (Verde) - Movimiento rapido",
+            "  - Arma Rapida (Amarillo) - Disparo rapido",
+            "  - Arma Dispersion (Purpura) - Disparo multiple",
+            "  - Arma Laser (Rojo) - Disparo potente",
+            "  - Misiles (Naranja) - Explosiones de area",
+            "",
+            "OBJETIVO:",
+            "  Destruye enemigos para ganar puntos",
+            "  Completa ondas para avanzar",
+            "  Manten combos para bonus de puntos",
+            "  Sobrevive el mayor tiempo posible!"
+        ]
+        
+        # Dibujar texto de comandos
+        y_offset = box_y + box_padding
+        for line in commands_info:
+            if line:
+                if line.endswith(":"):
+                    # Titulos en color
+                    text_surface = small_font.render(line, True, (255, 200, 100))
+                else:
+                    # Texto normal
+                    text_surface = tiny_font.render(line, True, (200, 200, 200))
+                screen.blit(text_surface, (box_x + box_padding, y_offset))
+            y_offset += 25
+        
+        # Boton Volver al Menu Principal
+        back_button_width = 300
+        back_button_height = 50
+        back_button_x = WIDTH // 2 - back_button_width // 2
+        back_button_y = HEIGHT - 100
+        
+        back_glow_intensity = int(100 + 155 * math.sin(menu_time / 20)) if back_selected else 50
+        back_glow_intensity = max(0, min(255, back_glow_intensity))
+        
+        # Brillo del boton
+        if back_selected:
+            back_glow_size = int(back_button_width * 1.1), int(back_button_height * 1.1)
+            back_glow_offset_x = (back_glow_size[0] - back_button_width) // 2
+            back_glow_offset_y = (back_glow_size[1] - back_button_height) // 2
+            back_glow_surf = pygame.Surface(back_glow_size, pygame.SRCALPHA)
+            back_glow_color = (0, back_glow_intensity, 255, back_glow_intensity // 2)
+            pygame.draw.rect(back_glow_surf, back_glow_color, 
+                           (0, 0, back_glow_size[0], back_glow_size[1]))
+            screen.blit(back_glow_surf, (back_button_x - back_glow_offset_x, back_button_y - back_glow_offset_y))
+        
+        # Fondo del boton
+        back_bg_color = (20, 20, 40) if back_selected else (15, 15, 25)
+        pygame.draw.rect(screen, back_bg_color, 
+                        (back_button_x, back_button_y, back_button_width, back_button_height))
+        pygame.draw.rect(screen, (0, back_glow_intensity, 255), 
+                        (back_button_x, back_button_y, back_button_width, back_button_height), 3)
+        
+        # Texto del boton
+        back_text = "> VOLVER AL MENU PRINCIPAL <" if back_selected else "  VOLVER AL MENU PRINCIPAL  "
+        back_color = (255, 255, 0) if back_selected else (200, 200, 200)
+        back_surface = small_font.render(back_text, True, back_color)
+        back_text_x = back_button_x + (back_button_width - back_surface.get_width()) // 2
+        back_text_y = back_button_y + (back_button_height - back_surface.get_height()) // 2
+        screen.blit(back_surface, (back_text_x, back_text_y))
+        
+        # Bordes arcade
+        border_thickness = 3
+        border_glow = int(80 + 100 * math.sin(menu_time / 25))
+        border_glow = max(0, min(255, border_glow))
+        border_glow_color = (0, border_glow, 255)
+        
+        pygame.draw.rect(screen, border_glow_color, (0, 0, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, HEIGHT - border_thickness, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, 0, border_thickness, HEIGHT))
+        pygame.draw.rect(screen, border_glow_color, (WIDTH - border_thickness, 0, border_thickness, HEIGHT))
+        
+        pygame.display.flip()
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+            if event.type == KEYDOWN:
+                if event.key == K_RETURN or event.key == K_ESCAPE:
+                    return
+                elif event.key == K_UP or event.key == K_DOWN or event.key == K_w or event.key == K_s:
+                    back_selected = not back_selected
+            if event.type == MOUSEBUTTONDOWN:
+                # Detectar clic en el boton
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                if (back_button_x <= mouse_x <= back_button_x + back_button_width and
+                    back_button_y <= mouse_y <= back_button_y + back_button_height):
+                    return
                     
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
