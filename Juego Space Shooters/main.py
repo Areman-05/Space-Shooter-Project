@@ -1080,10 +1080,49 @@ def show_main_menu():
                     exit()
 
 def show_commands_menu():
-    """Pantalla de comandos con toda la informacion de controles"""
+    """Pantalla de comandos con toda la informacion de controles y scroll"""
     menu_stars = [Star() for _ in range(100)]
     menu_time = 0
     back_selected = False
+    scroll_offset = 0
+    scroll_speed = 3
+    
+    # Informacion de comandos mejorada
+    commands_info = [
+        ("MOVIMIENTO:", True, (255, 200, 100)),
+        ("", False, (200, 200, 200)),
+        ("W / Flecha Arriba    -  Mover arriba", False, (220, 220, 220)),
+        ("S / Flecha Abajo    -  Mover abajo", False, (220, 220, 220)),
+        ("A / Flecha Izquierda  -  Mover izquierda", False, (220, 220, 220)),
+        ("D / Flecha Derecha   -  Mover derecha", False, (220, 220, 220)),
+        ("", False, (200, 200, 200)),
+        ("ACCIONES:", True, (255, 200, 100)),
+        ("", False, (200, 200, 200)),
+        ("ESPACIO  -  Disparar", False, (220, 220, 220)),
+        ("M       -  Lanzar misil", False, (220, 220, 220)),
+        ("", False, (200, 200, 200)),
+        ("POWER-UPS:", True, (255, 200, 100)),
+        ("", False, (200, 200, 200)),
+        ("Recoge los power-ups que caen:", False, (240, 240, 240)),
+        ("", False, (200, 200, 200)),
+        ("Escudo (Cyan)        -  Proteccion temporal", False, (150, 255, 255)),
+        ("Velocidad (Verde)    -  Movimiento rapido", False, (150, 255, 150)),
+        ("Arma Rapida (Amarillo) -  Disparo rapido", False, (255, 255, 150)),
+        ("Arma Dispersion (Purpura) -  Disparo multiple", False, (255, 150, 255)),
+        ("Arma Laser (Rojo)    -  Disparo potente", False, (255, 150, 150)),
+        ("Misiles (Naranja)    -  Explosiones de area", False, (255, 200, 100)),
+        ("", False, (200, 200, 200)),
+        ("OBJETIVO:", True, (255, 200, 100)),
+        ("", False, (200, 200, 200)),
+        ("Destruye enemigos para ganar puntos", False, (220, 220, 220)),
+        ("Completa ondas para avanzar", False, (220, 220, 220)),
+        ("Manten combos para bonus de puntos", False, (220, 220, 220)),
+        ("Sobrevive el mayor tiempo posible!", False, (255, 255, 150))
+    ]
+    
+    # Calcular altura total del contenido
+    line_height = 28
+    total_content_height = len(commands_info) * line_height
     
     while True:
         clock.tick(60)
@@ -1125,6 +1164,28 @@ def show_commands_menu():
         box_height = HEIGHT - 250
         box_padding = 30
         
+        # Crear superficie para el contenido scrolleable
+        content_surface = pygame.Surface((box_width - box_padding * 2, total_content_height))
+        content_surface.fill((15, 15, 25))
+        
+        # Dibujar texto en la superficie de contenido
+        y_offset = 0
+        for line_data in commands_info:
+            line_text, is_title, color = line_data
+            if line_text:
+                if is_title:
+                    # Titulos en tamaño más grande
+                    text_surface = small_font.render(line_text, True, color)
+                    # Sombra para títulos
+                    shadow = small_font.render(line_text, True, (0, 0, 0))
+                    content_surface.blit(shadow, (2, y_offset + 2))
+                    content_surface.blit(text_surface, (0, y_offset))
+                else:
+                    # Texto normal
+                    text_surface = tiny_font.render(line_text, True, color)
+                    content_surface.blit(text_surface, (0, y_offset))
+            y_offset += line_height
+        
         # Fondo de la caja con efecto de profundidad
         # Sombra
         shadow_offset = 5
@@ -1138,58 +1199,29 @@ def show_commands_menu():
         box_glow = max(0, min(255, box_glow))
         pygame.draw.rect(screen, (255, box_glow // 2, 0), (box_x, box_y, box_width, box_height), 4)
         
-        # Informacion de comandos mejorada
-        commands_info = [
-            ("MOVIMIENTO:", True, (255, 200, 100)),
-            ("", False, (200, 200, 200)),
-            ("W / Flecha Arriba    -  Mover arriba", False, (220, 220, 220)),
-            ("S / Flecha Abajo    -  Mover abajo", False, (220, 220, 220)),
-            ("A / Flecha Izquierda  -  Mover izquierda", False, (220, 220, 220)),
-            ("D / Flecha Derecha   -  Mover derecha", False, (220, 220, 220)),
-            ("", False, (200, 200, 200)),
-            ("ACCIONES:", True, (255, 200, 100)),
-            ("", False, (200, 200, 200)),
-            ("ESPACIO  -  Disparar", False, (220, 220, 220)),
-            ("M       -  Lanzar misil", False, (220, 220, 220)),
-            ("", False, (200, 200, 200)),
-            ("POWER-UPS:", True, (255, 200, 100)),
-            ("", False, (200, 200, 200)),
-            ("Recoge los power-ups que caen:", False, (240, 240, 240)),
-            ("", False, (200, 200, 200)),
-            ("Escudo (Cyan)        -  Proteccion temporal", False, (150, 255, 255)),
-            ("Velocidad (Verde)    -  Movimiento rapido", False, (150, 255, 150)),
-            ("Arma Rapida (Amarillo) -  Disparo rapido", False, (255, 255, 150)),
-            ("Arma Dispersion (Purpura) -  Disparo multiple", False, (255, 150, 255)),
-            ("Arma Laser (Rojo)    -  Disparo potente", False, (255, 150, 150)),
-            ("Misiles (Naranja)    -  Explosiones de area", False, (255, 200, 100)),
-            ("", False, (200, 200, 200)),
-            ("OBJETIVO:", True, (255, 200, 100)),
-            ("", False, (200, 200, 200)),
-            ("Destruye enemigos para ganar puntos", False, (220, 220, 220)),
-            ("Completa ondas para avanzar", False, (220, 220, 220)),
-            ("Manten combos para bonus de puntos", False, (220, 220, 220)),
-            ("Sobrevive el mayor tiempo posible!", False, (255, 255, 150))
-        ]
+        # Calcular área visible del contenido
+        visible_height = box_height - box_padding * 2
+        max_scroll = max(0, total_content_height - visible_height)
+        scroll_offset = max(0, min(scroll_offset, max_scroll))
         
-        # Dibujar texto de comandos con mejor espaciado
-        y_offset = box_y + box_padding
-        line_height = 28
+        # Dibujar contenido scrolleable
+        clip_rect = pygame.Rect(box_x + box_padding, box_y + box_padding, box_width - box_padding * 2, visible_height)
+        screen.set_clip(clip_rect)
+        screen.blit(content_surface, (box_x + box_padding, box_y + box_padding - scroll_offset))
+        screen.set_clip(None)
         
-        for line_data in commands_info:
-            line_text, is_title, color = line_data
-            if line_text:
-                if is_title:
-                    # Titulos en tamaño más grande
-                    text_surface = small_font.render(line_text, True, color)
-                    # Sombra para títulos
-                    shadow = small_font.render(line_text, True, (0, 0, 0))
-                    screen.blit(shadow, (box_x + box_padding + 2, y_offset + 2))
-                    screen.blit(text_surface, (box_x + box_padding, y_offset))
-                else:
-                    # Texto normal
-                    text_surface = tiny_font.render(line_text, True, color)
-                    screen.blit(text_surface, (box_x + box_padding, y_offset))
-            y_offset += line_height
+        # Indicadores de scroll (flechas)
+        if scroll_offset > 0:
+            # Flecha arriba
+            arrow_y = box_y + 10
+            arrow_points = [(WIDTH // 2, arrow_y), (WIDTH // 2 - 10, arrow_y + 10), (WIDTH // 2 + 10, arrow_y + 10)]
+            pygame.draw.polygon(screen, (255, 200, 100), arrow_points)
+        
+        if scroll_offset < max_scroll:
+            # Flecha abajo
+            arrow_y = box_y + box_height - 20
+            arrow_points = [(WIDTH // 2, arrow_y + 10), (WIDTH // 2 - 10, arrow_y), (WIDTH // 2 + 10, arrow_y)]
+            pygame.draw.polygon(screen, (255, 200, 100), arrow_points)
         
         # Boton Volver al Menu Principal
         back_button_width = 350
@@ -1244,16 +1276,30 @@ def show_commands_menu():
                 pygame.quit()
                 exit()
             if event.type == KEYDOWN:
-                if event.key == K_RETURN or event.key == K_ESCAPE:
+                if event.key == K_RETURN:
+                    if back_selected:
+                        return
+                elif event.key == K_ESCAPE:
                     return
-                elif event.key == K_UP or event.key == K_DOWN or event.key == K_w or event.key == K_s:
-                    back_selected = not back_selected
+                elif event.key == K_UP or event.key == K_w:
+                    if scroll_offset > 0:
+                        scroll_offset = max(0, scroll_offset - scroll_speed * 5)
+                    else:
+                        back_selected = True
+                elif event.key == K_DOWN or event.key == K_s:
+                    if scroll_offset < max_scroll:
+                        scroll_offset = min(max_scroll, scroll_offset + scroll_speed * 5)
+                    else:
+                        back_selected = False
             if event.type == MOUSEBUTTONDOWN:
                 # Detectar clic en el boton
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 if (back_button_x <= mouse_x <= back_button_x + back_button_width and
                     back_button_y <= mouse_y <= back_button_y + back_button_height):
                     return
+            # Scroll con rueda del mouse
+            if event.type == pygame.MOUSEWHEEL:
+                scroll_offset = max(0, min(max_scroll, scroll_offset - event.y * scroll_speed * 10))
                     
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
