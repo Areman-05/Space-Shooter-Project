@@ -1118,65 +1118,84 @@ def show_commands_menu():
         title_surface = arcade_font_medium.render(title_text, True, title_color)
         screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
         
-        # Caja de informacion
-        box_x = 50
-        box_y = 120
-        box_width = WIDTH - 100
-        box_height = HEIGHT - 280
-        box_padding = 20
+        # Caja de informacion mejorada
+        box_x = 40
+        box_y = 110
+        box_width = WIDTH - 80
+        box_height = HEIGHT - 250
+        box_padding = 30
         
-        # Fondo de la caja
-        pygame.draw.rect(screen, (20, 20, 30), (box_x, box_y, box_width, box_height))
+        # Fondo de la caja con efecto de profundidad
+        # Sombra
+        shadow_offset = 5
+        pygame.draw.rect(screen, (0, 0, 0), (box_x + shadow_offset, box_y + shadow_offset, box_width, box_height))
+        # Fondo principal
+        pygame.draw.rect(screen, (15, 15, 25), (box_x, box_y, box_width, box_height))
+        # Borde interior
+        pygame.draw.rect(screen, (30, 30, 40), (box_x + 2, box_y + 2, box_width - 4, box_height - 4), 1)
+        # Borde neón pulsante
         box_glow = int(100 + 100 * math.sin(menu_time / 40))
         box_glow = max(0, min(255, box_glow))
-        pygame.draw.rect(screen, (255, box_glow // 2, 0), (box_x, box_y, box_width, box_height), 3)
+        pygame.draw.rect(screen, (255, box_glow // 2, 0), (box_x, box_y, box_width, box_height), 4)
         
-        # Informacion de comandos
+        # Informacion de comandos mejorada
         commands_info = [
-            "MOVIMIENTO:",
-            "  W / Flecha Arriba - Mover arriba",
-            "  S / Flecha Abajo - Mover abajo",
-            "  A / Flecha Izquierda - Mover izquierda",
-            "  D / Flecha Derecha - Mover derecha",
-            "",
-            "ACCIONES:",
-            "  ESPACIO - Disparar",
-            "  M - Lanzar misil",
-            "",
-            "POWER-UPS:",
-            "  Recoge los power-ups que caen para obtener:",
-            "  - Escudo (Cyan) - Proteccion temporal",
-            "  - Velocidad (Verde) - Movimiento rapido",
-            "  - Arma Rapida (Amarillo) - Disparo rapido",
-            "  - Arma Dispersion (Purpura) - Disparo multiple",
-            "  - Arma Laser (Rojo) - Disparo potente",
-            "  - Misiles (Naranja) - Explosiones de area",
-            "",
-            "OBJETIVO:",
-            "  Destruye enemigos para ganar puntos",
-            "  Completa ondas para avanzar",
-            "  Manten combos para bonus de puntos",
-            "  Sobrevive el mayor tiempo posible!"
+            ("MOVIMIENTO:", True, (255, 200, 100)),
+            ("", False, (200, 200, 200)),
+            ("W / Flecha Arriba    -  Mover arriba", False, (220, 220, 220)),
+            ("S / Flecha Abajo    -  Mover abajo", False, (220, 220, 220)),
+            ("A / Flecha Izquierda  -  Mover izquierda", False, (220, 220, 220)),
+            ("D / Flecha Derecha   -  Mover derecha", False, (220, 220, 220)),
+            ("", False, (200, 200, 200)),
+            ("ACCIONES:", True, (255, 200, 100)),
+            ("", False, (200, 200, 200)),
+            ("ESPACIO  -  Disparar", False, (220, 220, 220)),
+            ("M       -  Lanzar misil", False, (220, 220, 220)),
+            ("", False, (200, 200, 200)),
+            ("POWER-UPS:", True, (255, 200, 100)),
+            ("", False, (200, 200, 200)),
+            ("Recoge los power-ups que caen:", False, (240, 240, 240)),
+            ("", False, (200, 200, 200)),
+            ("Escudo (Cyan)        -  Proteccion temporal", False, (150, 255, 255)),
+            ("Velocidad (Verde)    -  Movimiento rapido", False, (150, 255, 150)),
+            ("Arma Rapida (Amarillo) -  Disparo rapido", False, (255, 255, 150)),
+            ("Arma Dispersion (Purpura) -  Disparo multiple", False, (255, 150, 255)),
+            ("Arma Laser (Rojo)    -  Disparo potente", False, (255, 150, 150)),
+            ("Misiles (Naranja)    -  Explosiones de area", False, (255, 200, 100)),
+            ("", False, (200, 200, 200)),
+            ("OBJETIVO:", True, (255, 200, 100)),
+            ("", False, (200, 200, 200)),
+            ("Destruye enemigos para ganar puntos", False, (220, 220, 220)),
+            ("Completa ondas para avanzar", False, (220, 220, 220)),
+            ("Manten combos para bonus de puntos", False, (220, 220, 220)),
+            ("Sobrevive el mayor tiempo posible!", False, (255, 255, 150))
         ]
         
-        # Dibujar texto de comandos
+        # Dibujar texto de comandos con mejor espaciado
         y_offset = box_y + box_padding
-        for line in commands_info:
-            if line:
-                if line.endswith(":"):
-                    # Titulos en color
-                    text_surface = small_font.render(line, True, (255, 200, 100))
+        line_height = 28
+        
+        for line_data in commands_info:
+            line_text, is_title, color = line_data
+            if line_text:
+                if is_title:
+                    # Titulos en tamaño más grande
+                    text_surface = small_font.render(line_text, True, color)
+                    # Sombra para títulos
+                    shadow = small_font.render(line_text, True, (0, 0, 0))
+                    screen.blit(shadow, (box_x + box_padding + 2, y_offset + 2))
+                    screen.blit(text_surface, (box_x + box_padding, y_offset))
                 else:
                     # Texto normal
-                    text_surface = tiny_font.render(line, True, (200, 200, 200))
-                screen.blit(text_surface, (box_x + box_padding, y_offset))
-            y_offset += 25
+                    text_surface = tiny_font.render(line_text, True, color)
+                    screen.blit(text_surface, (box_x + box_padding, y_offset))
+            y_offset += line_height
         
         # Boton Volver al Menu Principal
-        back_button_width = 300
+        back_button_width = 350
         back_button_height = 50
         back_button_x = WIDTH // 2 - back_button_width // 2
-        back_button_y = HEIGHT - 100
+        back_button_y = HEIGHT - 90
         
         back_glow_intensity = int(100 + 155 * math.sin(menu_time / 20)) if back_selected else 50
         back_glow_intensity = max(0, min(255, back_glow_intensity))
