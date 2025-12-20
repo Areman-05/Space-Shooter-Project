@@ -1407,7 +1407,7 @@ def show_records_menu():
                     if scroll_offset < max_scroll:
                         scroll_offset = min(max_scroll, scroll_offset + scroll_speed * 5)
                     else:
-                        back_selected = False
+                        back_selected = True
             if event.type == MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 if (back_button_x <= mouse_x <= back_button_x + back_button_width and
@@ -1627,7 +1627,7 @@ def show_commands_menu():
                     if scroll_offset < max_scroll:
                         scroll_offset = min(max_scroll, scroll_offset + scroll_speed * 5)
                     else:
-                        back_selected = False
+                        back_selected = True
             if event.type == MOUSEBUTTONDOWN:
                 # Detectar clic en el boton
                 mouse_x, mouse_y = pygame.mouse.get_pos()
