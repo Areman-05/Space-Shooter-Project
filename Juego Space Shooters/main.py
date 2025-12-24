@@ -682,6 +682,324 @@ def show_splash_screen():
         pygame.display.flip()
         pygame.time.wait(8)
 
+def show_loading_screen():
+    """Pantalla de carga antes de iniciar el juego"""
+    clock_loading = pygame.time.Clock()
+    loading_duration = 3000  # 3 segundos
+    start_time = pygame.time.get_ticks()
+    
+    # Crear estrellas para el fondo
+    loading_stars = [Star() for _ in range(200)]
+    
+    # Partículas arcade
+    loading_particles = []
+    for _ in range(50):
+        loading_particles.append({
+            'x': random.randint(0, WIDTH),
+            'y': random.randint(0, HEIGHT),
+            'vx': random.uniform(-3, 3),
+            'vy': random.uniform(-3, 3),
+            'size': random.randint(3, 8),
+            'color': random.choice([CYAN, YELLOW, GREEN, PURPLE, ORANGE, RED]),
+            'life': random.randint(40, 80),
+            'glow': random.uniform(0.5, 1.5)
+        })
+    
+    # Partículas de energía que orbitan
+    energy_particles = []
+    for _ in range(20):
+        angle = random.uniform(0, 2 * math.pi)
+        energy_particles.append({
+            'angle': angle,
+            'radius': random.uniform(100, 200),
+            'speed': random.uniform(0.02, 0.05),
+            'size': random.randint(2, 4),
+            'color': random.choice([CYAN, YELLOW])
+        })
+    
+    # Efectos de scanlines
+    scanline_offset = 0
+    
+    # Intentar cargar imagen de fondo
+    background_image = None
+    try:
+        bg_path = os.path.join(BASE_DIR, "images", "astrominer.png")
+        if os.path.exists(bg_path):
+            bg_img = pygame.image.load(bg_path)
+            background_image = pygame.transform.scale(bg_img, (WIDTH, HEIGHT))
+    except:
+        pass
+    
+    running = True
+    while running:
+        current_time = pygame.time.get_ticks()
+        elapsed = current_time - start_time
+        
+        if elapsed >= loading_duration:
+            running = False
+            break
+        
+        clock_loading.tick(60)
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+            if event.type == KEYDOWN or event.type == MOUSEBUTTONDOWN:
+                running = False
+                break
+        
+        # Actualizar estrellas
+        for star in loading_stars:
+            star.update(3)
+        
+        # Actualizar partículas arcade
+        for particle in loading_particles[:]:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            particle['life'] -= 1
+            particle['glow'] += 0.1
+            if particle['life'] <= 0:
+                particle['x'] = random.randint(0, WIDTH)
+                particle['y'] = random.randint(0, HEIGHT)
+                particle['life'] = random.randint(40, 80)
+                particle['vx'] = random.uniform(-3, 3)
+                particle['vy'] = random.uniform(-3, 3)
+        
+        # Actualizar partículas de energía orbitales
+        center_x, center_y = WIDTH // 2, HEIGHT // 2
+        for particle in energy_particles:
+            particle['angle'] += particle['speed']
+            particle['radius'] += math.sin(elapsed / 500) * 0.5
+        
+        # Actualizar scanlines
+        scanline_offset = (scanline_offset + 2) % 4
+        
+        # Dibujar fondo
+        screen.fill(BLACK)
+        
+        # Dibujar imagen de fondo si existe
+        if background_image:
+            pulse = 0.3 + 0.2 * math.sin(elapsed / 300)
+            alpha = int(40 * pulse)
+            bg_surface = background_image.copy()
+            bg_surface.set_alpha(alpha)
+            zoom = 1.0 + 0.05 * math.sin(elapsed / 400)
+            zoomed = pygame.transform.scale(bg_surface, 
+                                          (int(WIDTH * zoom), int(HEIGHT * zoom)))
+            offset_x = (zoomed.get_width() - WIDTH) // 2
+            offset_y = (zoomed.get_height() - HEIGHT) // 2
+            screen.blit(zoomed, (-offset_x, -offset_y))
+        
+        # Dibujar estrellas
+        for star in loading_stars:
+            star.draw(screen)
+        
+        # Dibujar partículas arcade
+        for particle in loading_particles:
+            if particle['life'] > 0:
+                size = int(particle['size'] * (1 + 0.3 * math.sin(particle['glow'])))
+                glow_size = size + 2
+                glow_surface = pygame.Surface((glow_size * 2, glow_size * 2), pygame.SRCALPHA)
+                glow_alpha = int(100 * (particle['life'] / 80))
+                glow_color = (*particle['color'], glow_alpha)
+                pygame.draw.circle(glow_surface, glow_color, (glow_size, glow_size), glow_size)
+                screen.blit(glow_surface, (int(particle['x']) - glow_size, int(particle['y']) - glow_size))
+                pygame.draw.circle(screen, particle['color'], 
+                                 (int(particle['x']), int(particle['y'])), size)
+        
+        # Dibujar partículas de energía orbitales
+        for particle in energy_particles:
+            x = center_x + particle['radius'] * math.cos(particle['angle'])
+            y = center_y + particle['radius'] * math.sin(particle['angle'])
+            size = particle['size'] + int(2 * math.sin(elapsed / 200 + particle['angle']))
+            glow_surface = pygame.Surface((size * 3, size * 3), pygame.SRCALPHA)
+            pygame.draw.circle(glow_surface, (*particle['color'], 100), 
+                             (size * 1.5, size * 1.5), size * 1.5)
+            screen.blit(glow_surface, (int(x) - size * 1.5, int(y) - size * 1.5))
+            pygame.draw.circle(screen, particle['color'], (int(x), int(y)), size)
+        
+        # Efecto de parpadeo arcade
+        blink = int(255 * (0.8 + 0.2 * math.sin(elapsed / 100)))
+        blink_fast = int(255 * (0.7 + 0.3 * math.sin(elapsed / 50)))
+        
+        # Título principal "PREPARANDO PARTIDA"
+        title_text = "PREPARANDO PARTIDA"
+        title_y = HEIGHT // 3
+        
+        # Efecto de distorsión/ondulación
+        wave_offset = int(5 * math.sin(elapsed / 200))
+        
+        # Múltiples capas de sombra
+        for layer in range(5, 0, -1):
+            shadow_alpha = 50 + layer * 10
+            for offset_x in range(-layer, layer + 1):
+                for offset_y in range(-layer, layer + 1):
+                    if offset_x != 0 or offset_y != 0:
+                        shadow = arcade_font_large.render(title_text, True, (0, 0, 0))
+                        shadow_surface = pygame.Surface(shadow.get_size(), pygame.SRCALPHA)
+                        shadow_surface.set_alpha(shadow_alpha)
+                        shadow_surface.blit(shadow, (0, 0))
+                        screen.blit(shadow_surface, 
+                                  (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                   title_y + offset_y + wave_offset))
+        
+        # Capa exterior con múltiples colores neón
+        colors = [
+            (blink, 0, 255),
+            (0, blink, 255),
+            (blink, blink, 255),
+        ]
+        color_index = int((elapsed / 200) % len(colors))
+        outer_color = colors[color_index]
+        
+        # Brillo exterior pulsante
+        for i in range(3):
+            glow_alpha = int((100 - i * 30) * (0.5 + 0.5 * math.sin(elapsed / 150)))
+            outer_glow = arcade_font_large.render(title_text, True, outer_color)
+            glow_surface = pygame.Surface(outer_glow.get_size(), pygame.SRCALPHA)
+            glow_surface.set_alpha(glow_alpha)
+            glow_surface.blit(outer_glow, (0, 0))
+            offset = i * 2
+            screen.blit(glow_surface, 
+                      (WIDTH // 2 - outer_glow.get_width() // 2 - offset, 
+                       title_y - offset + wave_offset))
+        
+        # Capa principal con efecto de arcoíris
+        hue = (elapsed / 50) % 360
+        r = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue))))
+        g = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue + 120))))
+        b = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue + 240))))
+        neon_color = (r, g, b)
+        
+        main_text = arcade_font_large.render(title_text, True, neon_color)
+        screen.blit(main_text, (WIDTH // 2 - main_text.get_width() // 2, 
+                               title_y + wave_offset))
+        
+        # Capa interior con brillo intenso
+        inner_glow = arcade_font_large.render(title_text, True, (255, 255, 255))
+        inner_surface = pygame.Surface(inner_glow.get_size(), pygame.SRCALPHA)
+        inner_alpha = int(blink_fast * 0.6)
+        inner_surface.set_alpha(inner_alpha)
+        inner_surface.blit(inner_glow, (0, 0))
+        screen.blit(inner_surface, (WIDTH // 2 - main_text.get_width() // 2, 
+                                   title_y + wave_offset))
+        
+        # Efecto de "carga" animado
+        loading_text = "CARGANDO"
+        dots = "." * (int(elapsed / 250) % 4)
+        loading_full = loading_text + dots
+        
+        # Sombra múltiple para texto de carga
+        for i in range(3):
+            shadow_alpha = 100 - i * 30
+            loading_shadow = small_font.render(loading_full, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(loading_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(shadow_alpha)
+            shadow_surf.blit(loading_shadow, (0, 0))
+            screen.blit(shadow_surf, 
+                      (WIDTH // 2 - loading_shadow.get_width() // 2 + i, 
+                       HEIGHT // 2 + 100 + i))
+        
+        # Texto de carga con efecto neón
+        loading_alpha = int(150 + 105 * math.sin(elapsed / 150))
+        loading_alpha = max(0, min(255, loading_alpha))
+        loading_color = (0, loading_alpha, 255)
+        loading_surface = small_font.render(loading_full, True, loading_color)
+        screen.blit(loading_surface, (WIDTH // 2 - loading_surface.get_width() // 2, 
+                                     HEIGHT // 2 + 100))
+        
+        # Barra de carga mejorada
+        bar_width = 400
+        bar_height = 30
+        bar_x = WIDTH // 2 - bar_width // 2
+        bar_y = HEIGHT // 2 + 150
+        
+        # Fondo de la barra con borde neón
+        pygame.draw.rect(screen, (20, 20, 20), (bar_x - 2, bar_y - 2, bar_width + 4, bar_height + 4))
+        pygame.draw.rect(screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        # Borde neón pulsante
+        border_glow = int(100 + 155 * math.sin(elapsed / 100))
+        border_glow = max(0, min(255, border_glow))
+        pygame.draw.rect(screen, (0, border_glow, 255), (bar_x, bar_y, bar_width, bar_height), 3)
+        
+        # Barra de progreso
+        progress = min(elapsed / loading_duration, 1.0)
+        progress_width = int(bar_width * progress)
+        
+        # Gradiente animado en la barra
+        for i in range(progress_width):
+            hue_offset = (i + elapsed / 10) % 360
+            r = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue_offset))))
+            g = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue_offset + 120))))
+            b = int(255 * (0.5 + 0.5 * math.sin(math.radians(hue_offset + 240))))
+            color = (r, g, b)
+            pygame.draw.line(screen, color, 
+                           (bar_x + i, bar_y), 
+                           (bar_x + i, bar_y + bar_height))
+        
+        # Brillo deslizante en la barra
+        if progress_width > 0:
+            glow_pos = int(progress_width - 30 + 30 * math.sin(elapsed / 100))
+            glow_pos = max(0, min(progress_width, glow_pos))
+            glow_width = 40
+            for i in range(glow_width):
+                if glow_pos - i >= 0:
+                    alpha = int(255 * (1 - i / glow_width))
+                    glow_surface = pygame.Surface((1, bar_height), pygame.SRCALPHA)
+                    glow_surface.fill((255, 255, 255, alpha))
+                    screen.blit(glow_surface, (bar_x + glow_pos - i, bar_y))
+        
+        # Efectos de líneas arcade en los bordes
+        line_thickness = 4
+        line_length = 80
+        line_speed = elapsed / 8
+        
+        # Líneas superiores e inferiores
+        for i in range(0, WIDTH, 120):
+            x = (i + line_speed) % (WIDTH + line_length) - line_length
+            line_alpha = int(150 + 105 * math.sin((elapsed + i) / 200))
+            line_color = (0, line_alpha, 255)
+            pygame.draw.line(screen, line_color, (x, 0), (x + line_length, 0), line_thickness)
+            pygame.draw.line(screen, line_color, (x, HEIGHT - 1), (x + line_length, HEIGHT - 1), line_thickness)
+        
+        # Líneas laterales
+        for i in range(0, HEIGHT, 120):
+            y = (i + line_speed) % (HEIGHT + line_length) - line_length
+            line_alpha = int(150 + 105 * math.sin((elapsed + i) / 200))
+            line_color = (0, line_alpha, 255)
+            pygame.draw.line(screen, line_color, (0, y), (0, y + line_length), line_thickness)
+            pygame.draw.line(screen, line_color, (WIDTH - 1, y), (WIDTH - 1, y + line_length), line_thickness)
+        
+        # Efecto de scanlines retro
+        scanline_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        for y in range(scanline_offset, HEIGHT, 4):
+            scanline_surface.fill((0, 0, 0, 30), (0, y, WIDTH, 1))
+        screen.blit(scanline_surface, (0, 0))
+        
+        # Efecto de viñeta
+        vignette = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        center_x_v, center_y_v = WIDTH // 2, HEIGHT // 2
+        max_dist = math.sqrt(center_x_v**2 + center_y_v**2)
+        for x in range(0, WIDTH, 2):
+            for y in range(0, HEIGHT, 2):
+                dist = math.sqrt((x - center_x_v)**2 + (y - center_y_v)**2)
+                alpha = int(50 * (dist / max_dist))
+                if alpha > 0:
+                    vignette.fill((0, 0, 0, alpha), (x, y, 2, 2))
+        screen.blit(vignette, (0, 0))
+        
+        pygame.display.flip()
+    
+    # Fade out
+    fade_surface = pygame.Surface((WIDTH, HEIGHT))
+    for alpha in range(0, 255, 8):
+        fade_surface.set_alpha(alpha)
+        fade_surface.fill(BLACK)
+        screen.blit(fade_surface, (0, 0))
+        pygame.display.flip()
+        pygame.time.wait(8)
+
 def show_main_menu():
     # Reproducir música de menú si existe
     try:
@@ -1959,6 +2277,8 @@ def run_game():
     
     while True:
         if show_main_menu():
+            # Mostrar pantalla de carga antes de iniciar el juego
+            show_loading_screen()
             main_game()
         else:
             break
