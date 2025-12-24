@@ -1956,6 +1956,268 @@ def show_commands_menu():
             if event.type == pygame.MOUSEWHEEL:
                 scroll_offset = max(0, min(max_scroll, scroll_offset - event.y * scroll_speed * 10))
                     
+def show_pause_menu(game_surface):
+    """Menu de pausa durante la partida"""
+    menu_time = 0
+    selected_option = 0  # 0 = reanudar, 1 = reiniciar, 2 = comandos, 3 = menu principal
+    option_animations = [0.0, 0.0, 0.0, 0.0]
+    
+    # Crear superficie semitransparente para oscurecer el fondo
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    
+    while True:
+        clock.tick(60)
+        menu_time += 1
+        
+        # Dibujar el estado del juego de fondo
+        screen.blit(game_surface, (0, 0))
+        screen.blit(overlay, (0, 0))
+        
+        # Título "PAUSA"
+        title_text = "PAUSA"
+        title_y = 80
+        blink = int(255 * (0.8 + 0.2 * math.sin(menu_time / 30)))
+        
+        # Sombra del título
+        for offset_x in range(-3, 4):
+            for offset_y in range(-3, 4):
+                if offset_x != 0 or offset_y != 0:
+                    shadow = arcade_font_large.render(title_text, True, (0, 0, 0))
+                    screen.blit(shadow, (WIDTH // 2 - shadow.get_width() // 2 + offset_x, 
+                                       title_y + offset_y))
+        
+        # Título principal con efecto neón
+        title_color = (255, 200, 0)
+        title_surface = arcade_font_large.render(title_text, True, title_color)
+        screen.blit(title_surface, (WIDTH // 2 - title_surface.get_width() // 2, title_y))
+        
+        # Opciones del menú
+        resume_y = HEIGHT // 2 - 60
+        restart_y = HEIGHT // 2 - 10
+        commands_y = HEIGHT // 2 + 40
+        main_menu_y = HEIGHT // 2 + 90
+        
+        button_width = 350
+        button_height = 50
+        
+        # Actualizar animaciones
+        for i in range(4):
+            if i == selected_option:
+                option_animations[i] += 0.1
+            else:
+                option_animations[i] = 0
+        
+        # Botón REANUDAR
+        resume_button_x = WIDTH // 2 - button_width // 2
+        resume_button_y = resume_y - button_height // 2
+        
+        resume_glow_intensity = int(100 + 155 * math.sin(option_animations[0] * 2)) if selected_option == 0 else 50
+        resume_glow_intensity = max(0, min(255, resume_glow_intensity))
+        
+        if selected_option == 0:
+            resume_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[0]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[0])))
+            resume_glow_offset_x = (resume_glow_size[0] - button_width) // 2
+            resume_glow_offset_y = (resume_glow_size[1] - button_height) // 2
+            resume_glow_surf = pygame.Surface(resume_glow_size, pygame.SRCALPHA)
+            resume_glow_color = (0, resume_glow_intensity, 255, resume_glow_intensity // 2)
+            pygame.draw.rect(resume_glow_surf, resume_glow_color, 
+                           (0, 0, resume_glow_size[0], resume_glow_size[1]))
+            screen.blit(resume_glow_surf, (resume_button_x - resume_glow_offset_x, resume_button_y - resume_glow_offset_y))
+        
+        resume_bg_color = (20, 40, 20) if selected_option == 0 else (15, 25, 15)
+        pygame.draw.rect(screen, resume_bg_color, 
+                        (resume_button_x, resume_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (0, resume_glow_intensity, 255), 
+                        (resume_button_x, resume_button_y, button_width, button_height), 3)
+        
+        resume_text_str = "> REANUDAR <" if selected_option == 0 else "  REANUDAR  "
+        resume_color = (100, 255, 100) if selected_option == 0 else (180, 180, 180)
+        resume_color = (int(resume_color[0] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))),
+                        int(resume_color[1] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))),
+                        int(resume_color[2] * (0.9 + 0.1 * math.sin(option_animations[0] * 3))))
+        
+        for i in range(3):
+            resume_shadow = small_font.render(resume_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(resume_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(resume_shadow, (0, 0))
+            resume_shadow_x = resume_button_x + (button_width - resume_shadow.get_width()) // 2 + i
+            resume_shadow_y = resume_button_y + (button_height - resume_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (resume_shadow_x, resume_shadow_y))
+        
+        resume_surface = small_font.render(resume_text_str, True, resume_color)
+        resume_text_x = resume_button_x + (button_width - resume_surface.get_width()) // 2
+        resume_text_y = resume_button_y + (button_height - resume_surface.get_height()) // 2
+        screen.blit(resume_surface, (resume_text_x, resume_text_y))
+        
+        # Botón REINICIAR
+        restart_button_x = WIDTH // 2 - button_width // 2
+        restart_button_y = restart_y - button_height // 2
+        
+        restart_glow_intensity = int(100 + 155 * math.sin(option_animations[1] * 2)) if selected_option == 1 else 50
+        restart_glow_intensity = max(0, min(255, restart_glow_intensity))
+        
+        if selected_option == 1:
+            restart_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[1]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[1])))
+            restart_glow_offset_x = (restart_glow_size[0] - button_width) // 2
+            restart_glow_offset_y = (restart_glow_size[1] - button_height) // 2
+            restart_glow_surf = pygame.Surface(restart_glow_size, pygame.SRCALPHA)
+            restart_glow_color = (255, restart_glow_intensity, 0, restart_glow_intensity // 2)
+            pygame.draw.rect(restart_glow_surf, restart_glow_color, 
+                           (0, 0, restart_glow_size[0], restart_glow_size[1]))
+            screen.blit(restart_glow_surf, (restart_button_x - restart_glow_offset_x, restart_button_y - restart_glow_offset_y))
+        
+        restart_bg_color = (40, 30, 20) if selected_option == 1 else (25, 20, 15)
+        pygame.draw.rect(screen, restart_bg_color, 
+                        (restart_button_x, restart_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (255, restart_glow_intensity, 0), 
+                        (restart_button_x, restart_button_y, button_width, button_height), 3)
+        
+        restart_text_str = "> REINICIAR <" if selected_option == 1 else "  REINICIAR  "
+        restart_color = (255, 200, 100) if selected_option == 1 else (180, 180, 180)
+        restart_color = (int(restart_color[0] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
+                        int(restart_color[1] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))),
+                        int(restart_color[2] * (0.9 + 0.1 * math.sin(option_animations[1] * 3))))
+        
+        for i in range(3):
+            restart_shadow = small_font.render(restart_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(restart_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(restart_shadow, (0, 0))
+            restart_shadow_x = restart_button_x + (button_width - restart_shadow.get_width()) // 2 + i
+            restart_shadow_y = restart_button_y + (button_height - restart_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (restart_shadow_x, restart_shadow_y))
+        
+        restart_surface = small_font.render(restart_text_str, True, restart_color)
+        restart_text_x = restart_button_x + (button_width - restart_surface.get_width()) // 2
+        restart_text_y = restart_button_y + (button_height - restart_surface.get_height()) // 2
+        screen.blit(restart_surface, (restart_text_x, restart_text_y))
+        
+        # Botón COMANDOS
+        commands_button_x = WIDTH // 2 - button_width // 2
+        commands_button_y = commands_y - button_height // 2
+        
+        commands_glow_intensity = int(100 + 155 * math.sin(option_animations[2] * 2)) if selected_option == 2 else 50
+        commands_glow_intensity = max(0, min(255, commands_glow_intensity))
+        
+        if selected_option == 2:
+            commands_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[2]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[2])))
+            commands_glow_offset_x = (commands_glow_size[0] - button_width) // 2
+            commands_glow_offset_y = (commands_glow_size[1] - button_height) // 2
+            commands_glow_surf = pygame.Surface(commands_glow_size, pygame.SRCALPHA)
+            commands_glow_color = (255, commands_glow_intensity, 0, commands_glow_intensity // 2)
+            pygame.draw.rect(commands_glow_surf, commands_glow_color, 
+                           (0, 0, commands_glow_size[0], commands_glow_size[1]))
+            screen.blit(commands_glow_surf, (commands_button_x - commands_glow_offset_x, commands_button_y - commands_glow_offset_y))
+        
+        commands_bg_color = (40, 30, 20) if selected_option == 2 else (25, 20, 15)
+        pygame.draw.rect(screen, commands_bg_color, 
+                        (commands_button_x, commands_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (255, commands_glow_intensity, 0), 
+                        (commands_button_x, commands_button_y, button_width, button_height), 3)
+        
+        commands_text_str = "> COMANDOS <" if selected_option == 2 else "  COMANDOS  "
+        commands_color = (255, 200, 100) if selected_option == 2 else (180, 180, 180)
+        commands_color = (int(commands_color[0] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
+                         int(commands_color[1] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))),
+                         int(commands_color[2] * (0.9 + 0.1 * math.sin(option_animations[2] * 3))))
+        
+        for i in range(3):
+            commands_shadow = small_font.render(commands_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(commands_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(commands_shadow, (0, 0))
+            commands_shadow_x = commands_button_x + (button_width - commands_shadow.get_width()) // 2 + i
+            commands_shadow_y = commands_button_y + (button_height - commands_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (commands_shadow_x, commands_shadow_y))
+        
+        commands_surface = small_font.render(commands_text_str, True, commands_color)
+        commands_text_x = commands_button_x + (button_width - commands_surface.get_width()) // 2
+        commands_text_y = commands_button_y + (button_height - commands_surface.get_height()) // 2
+        screen.blit(commands_surface, (commands_text_x, commands_text_y))
+        
+        # Botón MENÚ PRINCIPAL
+        main_menu_button_x = WIDTH // 2 - button_width // 2
+        main_menu_button_y = main_menu_y - button_height // 2
+        
+        main_menu_glow_intensity = int(100 + 155 * math.sin(option_animations[3] * 2)) if selected_option == 3 else 50
+        main_menu_glow_intensity = max(0, min(255, main_menu_glow_intensity))
+        
+        if selected_option == 3:
+            main_menu_glow_size = int(button_width * (1.0 + 0.1 * math.sin(option_animations[3]))), int(button_height * (1.0 + 0.1 * math.sin(option_animations[3])))
+            main_menu_glow_offset_x = (main_menu_glow_size[0] - button_width) // 2
+            main_menu_glow_offset_y = (main_menu_glow_size[1] - button_height) // 2
+            main_menu_glow_surf = pygame.Surface(main_menu_glow_size, pygame.SRCALPHA)
+            main_menu_glow_color = (255, main_menu_glow_intensity // 2, 0, main_menu_glow_intensity // 2)
+            pygame.draw.rect(main_menu_glow_surf, main_menu_glow_color, 
+                           (0, 0, main_menu_glow_size[0], main_menu_glow_size[1]))
+            screen.blit(main_menu_glow_surf, (main_menu_button_x - main_menu_glow_offset_x, main_menu_button_y - main_menu_glow_offset_y))
+        
+        main_menu_bg_color = (40, 20, 20) if selected_option == 3 else (25, 15, 15)
+        pygame.draw.rect(screen, main_menu_bg_color, 
+                        (main_menu_button_x, main_menu_button_y, button_width, button_height))
+        pygame.draw.rect(screen, (255, main_menu_glow_intensity // 2, 0), 
+                        (main_menu_button_x, main_menu_button_y, button_width, button_height), 3)
+        
+        main_menu_text_str = "> MENU PRINCIPAL <" if selected_option == 3 else "  MENU PRINCIPAL  "
+        main_menu_color = (255, 100, 100) if selected_option == 3 else (180, 180, 180)
+        main_menu_color = (int(main_menu_color[0] * (0.9 + 0.1 * math.sin(option_animations[3] * 3))),
+                           int(main_menu_color[1] * (0.9 + 0.1 * math.sin(option_animations[3] * 3))),
+                           int(main_menu_color[2] * (0.9 + 0.1 * math.sin(option_animations[3] * 3))))
+        
+        for i in range(3):
+            main_menu_shadow = small_font.render(main_menu_text_str, True, (0, 0, 0))
+            shadow_surf = pygame.Surface(main_menu_shadow.get_size(), pygame.SRCALPHA)
+            shadow_surf.set_alpha(100 - i * 30)
+            shadow_surf.blit(main_menu_shadow, (0, 0))
+            main_menu_shadow_x = main_menu_button_x + (button_width - main_menu_shadow.get_width()) // 2 + i
+            main_menu_shadow_y = main_menu_button_y + (button_height - main_menu_shadow.get_height()) // 2 + i
+            screen.blit(shadow_surf, (main_menu_shadow_x, main_menu_shadow_y))
+        
+        main_menu_surface = small_font.render(main_menu_text_str, True, main_menu_color)
+        main_menu_text_x = main_menu_button_x + (button_width - main_menu_surface.get_width()) // 2
+        main_menu_text_y = main_menu_button_y + (button_height - main_menu_surface.get_height()) // 2
+        screen.blit(main_menu_surface, (main_menu_text_x, main_menu_text_y))
+        
+        # Bordes arcade
+        border_thickness = 3
+        border_glow = int(80 + 100 * math.sin(menu_time / 25))
+        border_glow = max(0, min(255, border_glow))
+        border_glow_color = (255, border_glow, 0)
+        
+        pygame.draw.rect(screen, border_glow_color, (0, 0, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, HEIGHT - border_thickness, WIDTH, border_thickness))
+        pygame.draw.rect(screen, border_glow_color, (0, 0, border_thickness, HEIGHT))
+        pygame.draw.rect(screen, border_glow_color, (WIDTH - border_thickness, 0, border_thickness, HEIGHT))
+        
+        pygame.display.flip()
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                exit()
+            if event.type == KEYDOWN:
+                if event.key == K_UP or event.key == K_w:
+                    selected_option = (selected_option - 1) % 4
+                    option_animations[selected_option] = 0
+                elif event.key == K_DOWN or event.key == K_s:
+                    selected_option = (selected_option + 1) % 4
+                    option_animations[selected_option] = 0
+                elif event.key == K_RETURN:
+                    if selected_option == 0:
+                        return "resume"
+                    elif selected_option == 1:
+                        return "restart"
+                    elif selected_option == 2:
+                        show_commands_menu()
+                        # Volver a capturar el estado del juego después de ver comandos
+                        return "resume"
+                    else:
+                        return "main_menu"
+                elif event.key == K_ESCAPE:
+                    return "resume"
+
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
     screen.blit(message, (WIDTH // 2 - message.get_width() // 2, HEIGHT - 40))
@@ -2044,8 +2306,81 @@ def main_game():
                         shoot_sound.play()
                     
                 if event.key == K_ESCAPE:
-                    pygame.mixer.music.stop()
-                    running = False
+                    # Capturar el estado actual del juego
+                    game_surface = pygame.Surface((WIDTH, HEIGHT))
+                    game_surface.fill(BLACK)
+                    
+                    # Dibujar estrellas de fondo
+                    for star in stars:
+                        star.draw(game_surface)
+                    
+                    player_group.draw(game_surface)
+                    player.draw_shield(game_surface)
+                    bullets.draw(game_surface)
+                    missiles.draw(game_surface)
+                    enemies.draw(game_surface)
+                    
+                    # Dibujar power-ups
+                    for powerup in powerups:
+                        powerup.draw(game_surface)
+                    
+                    # Dibujar explosiones y partículas
+                    for explosion in explosions:
+                        explosion.draw(game_surface)
+                    for particle in particles:
+                        particle.draw(game_surface)
+                    
+                    # UI
+                    lives_text = font.render(f"Vidas: {player.lives}", True, WHITE)
+                    game_surface.blit(lives_text, (10, 50))
+                    score_text = font.render(f"Puntuacion: {score}", True, WHITE)
+                    game_surface.blit(score_text, (10, 10))
+                    
+                    # Wave indicator
+                    wave_text = small_font.render(f"ONDA {wave}", True, CYAN)
+                    game_surface.blit(wave_text, (WIDTH - wave_text.get_width() - 10, 10))
+                    progress_text = tiny_font.render(f"{enemies_killed_this_wave}/{enemies_per_wave}", True, WHITE)
+                    game_surface.blit(progress_text, (WIDTH - progress_text.get_width() - 10, 40))
+                    
+                    # Combo indicator
+                    if combo > 1:
+                        combo_text = small_font.render(f"COMBO x{combo}!", True, YELLOW)
+                        game_surface.blit(combo_text, (WIDTH // 2 - combo_text.get_width() // 2, 50))
+                    
+                    # Indicadores de power-ups
+                    y_offset = 100
+                    if player.shield_active:
+                        shield_text = tiny_font.render(f"ESCUDO: {player.shield_time // 60}s", True, CYAN)
+                        game_surface.blit(shield_text, (10, y_offset))
+                        y_offset += 20
+                    
+                    if player.speed_boost_active:
+                        speed_text = tiny_font.render(f"VELOCIDAD: {player.speed_boost_time // 60}s", True, GREEN)
+                        game_surface.blit(speed_text, (10, y_offset))
+                        y_offset += 20
+                    
+                    if player.weapon_type != "normal":
+                        weapon_names = {"rapid": "RAPIDO", "spread": "DISPERSION", "laser": "LASER"}
+                        weapon_text = tiny_font.render(f"ARMA: {weapon_names[player.weapon_type]} ({player.weapon_time // 60}s)", True, YELLOW)
+                        game_surface.blit(weapon_text, (10, y_offset))
+                        y_offset += 20
+                    
+                    if player.missiles_available > 0:
+                        missile_text = tiny_font.render(f"MISILES: {player.missiles_available} (M)", True, ORANGE)
+                        game_surface.blit(missile_text, (10, y_offset))
+                    
+                    # Mostrar menú de pausa
+                    pause_action = show_pause_menu(game_surface)
+                    
+                    if pause_action == "restart":
+                        # Reiniciar la partida
+                        pygame.mixer.music.stop()
+                        return "restart"
+                    elif pause_action == "main_menu":
+                        # Volver al menú principal
+                        pygame.mixer.music.stop()
+                        running = False
+                    # Si es "resume", simplemente continúa el juego
         
         # Sistema de ondas
         if enemies_killed_this_wave >= enemies_per_wave and len(enemies) == 0:
@@ -2279,7 +2614,11 @@ def run_game():
         if show_main_menu():
             # Mostrar pantalla de carga antes de iniciar el juego
             show_loading_screen()
-            main_game()
+            result = main_game()
+            # Si se seleccionó reiniciar, volver a iniciar el juego sin pasar por el menú
+            while result == "restart":
+                show_loading_screen()
+                result = main_game()
         else:
             break
     pygame.quit()
