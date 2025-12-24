@@ -2211,8 +2211,9 @@ def show_pause_menu(game_surface):
                         return "restart"
                     elif selected_option == 2:
                         show_commands_menu()
-                        # Volver a capturar el estado del juego después de ver comandos
-                        return "resume"
+                        # Continuar el bucle del menú de pausa después de ver comandos
+                        # No retornar, para que el usuario pueda seleccionar otra opción
+                        continue
                     else:
                         return "main_menu"
                 elif event.key == K_ESCAPE:
