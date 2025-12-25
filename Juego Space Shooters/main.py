@@ -169,6 +169,28 @@ class Player(pygame.sprite.Sprite):
     def add_missiles(self, count=3):
         self.missiles_available += count
     
+    def activate_invincibility(self, duration=180):
+        """Activa la invencibilidad por un tiempo determinado (en frames)"""
+        self.invincible = True
+        self.invincibility_time = duration
+    
+    def draw(self, surface):
+        """Dibuja el jugador con efecto de transparencia si está invencible"""
+        if self.invincible:
+            # Efecto de parpadeo durante invencibilidad
+            flash_rate = 10  # Velocidad del parpadeo
+            flash_alpha = int(128 + 127 * math.sin(self.invincibility_time / flash_rate))
+            flash_alpha = max(50, min(255, flash_alpha))  # Limitar entre 50 y 255
+            
+            # Crear superficie con transparencia
+            player_surface = pygame.Surface(self.image.get_size(), pygame.SRCALPHA)
+            player_surface.set_alpha(flash_alpha)
+            player_surface.blit(self.image, (0, 0))
+            surface.blit(player_surface, self.rect)
+        else:
+            # Dibujar normalmente
+            surface.blit(self.image, self.rect)
+    
     def draw_shield(self, surface):
         if self.shield_active:
             time = pygame.time.get_ticks() / 100
@@ -1450,7 +1472,7 @@ def show_main_menu():
                     if start_sound:
                         start_sound.play()
                     if selected_option == 0:
-                        return True
+                    return True
                     elif selected_option == 1:
                         show_commands_menu()
                     elif selected_option == 2:
@@ -1462,7 +1484,7 @@ def show_main_menu():
                     pygame.mixer.music.stop()
                     pygame.quit()
                     exit()
-
+                    
 def save_game_record(score, wave, enemies_killed, combo_max):
     """Guarda un registro de partida en un archivo JSON"""
     records_file = os.path.join(BASE_DIR, "Juego Space Shooters", "game_records.json")
@@ -2635,13 +2657,13 @@ def main_game():
             if event.type == KEYDOWN:
                 if event.key == K_SPACE:
                     if player.shoot_cooldown <= 0:
-                        bullet_speed = -5 - (score // 150)
+                    bullet_speed = -5 - (score // 150)
                         
                         if player.weapon_type == "normal":
-                            bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
+                    bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
                             player.shoot_cooldown = 15
                             if shoot_sound:
-                                shoot_sound.play()
+                    shoot_sound.play()
                             
                         elif player.weapon_type == "rapid":
                             bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
@@ -2680,7 +2702,8 @@ def main_game():
                     for star in stars:
                         star.draw(game_surface)
                     
-                    player_group.draw(game_surface)
+                    # Dibujar jugador con efecto de invencibilidad
+                    player.draw(game_surface)
                     player.draw_shield(game_surface)
                     bullets.draw(game_surface)
                     missiles.draw(game_surface)
@@ -2745,7 +2768,7 @@ def main_game():
                     elif pause_action == "main_menu":
                         # Volver al menú principal
                         pygame.mixer.music.stop()
-                        running = False
+                    running = False
                     # Si es "resume", simplemente continúa el juego
         
         # Sistema de ondas
@@ -2829,7 +2852,7 @@ def main_game():
                 dy = enemy.rect.centery - missile.rect.centery
                 distance = math.sqrt(dx*dx + dy*dy)
                 if distance <= explosion_radius:
-                    score += 10
+            score += 10
                     enemies_killed_this_wave += 1
                     total_enemies_killed += 1
                     # Crear partículas
@@ -2837,7 +2860,7 @@ def main_game():
                         particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, ORANGE))
                     enemy.kill()
             if not wave_complete:
-                enemies.add(Enemy())
+            enemies.add(Enemy())
         
         # Actualizar explosiones y partículas
         explosions = [e for e in explosions if e.update()]
@@ -2888,11 +2911,11 @@ def main_game():
                     explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
                     explosion_sound.play()
             else:
-                player.lives -= 1
+            player.lives -= 1
                 if explosion_sound:
                     explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
                     explosion_sound.play()
-                if player.lives == 0:
+            if player.lives == 0:
                     pygame.mixer.music.stop()
                     # Guardar registro de la partida
                     save_game_record(score, wave, total_enemies_killed, combo_max)
@@ -2903,7 +2926,7 @@ def main_game():
                     if stats_action == "restart":
                         return "restart"
                     else:
-                        running = False
+                running = False
         
         # Dibujado
         screen.fill(BLACK)
@@ -2912,7 +2935,8 @@ def main_game():
         for star in stars:
             star.draw(screen)
         
-        player_group.draw(screen)
+        # Dibujar jugador con efecto de invencibilidad
+        player.draw(screen)
         player.draw_shield(screen)
         bullets.draw(screen)
         missiles.draw(screen)
