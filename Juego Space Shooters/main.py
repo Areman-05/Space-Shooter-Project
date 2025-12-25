@@ -111,7 +111,9 @@ class Player(pygame.sprite.Sprite):
         self.invincibility_time = 0
 
     def update(self, score):
-        base_speed = self.base_speed + (score // 150)
+        # Progresión de velocidad más gradual (cada 300 puntos en lugar de 150)
+        speed_bonus = (score // 300) * 0.5
+        base_speed = self.base_speed + speed_bonus
         if self.speed_boost_active:
             self.speed = base_speed * 2.5
         else:
