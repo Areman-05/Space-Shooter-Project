@@ -1491,7 +1491,7 @@ def show_main_menu():
                     if start_sound:
                         start_sound.play()
                     if selected_option == 0:
-                    return True
+                        return True
                     elif selected_option == 1:
                         show_commands_menu()
                     elif selected_option == 2:
@@ -2676,13 +2676,13 @@ def main_game():
             if event.type == KEYDOWN:
                 if event.key == K_SPACE:
                     if player.shoot_cooldown <= 0:
-                    bullet_speed = -5 - (score // 150)
+                        bullet_speed = -5 - (score // 150)
                         
                         if player.weapon_type == "normal":
-                    bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
+                            bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
                             player.shoot_cooldown = 15
                             if shoot_sound:
-                    shoot_sound.play()
+                                shoot_sound.play()
                             
                         elif player.weapon_type == "rapid":
                             bullets.add(Bullet(player.rect.centerx, player.rect.top, bullet_speed))
@@ -2877,15 +2877,13 @@ def main_game():
                 dy = enemy.rect.centery - missile.rect.centery
                 distance = math.sqrt(dx*dx + dy*dy)
                 if distance <= explosion_radius:
-            score += 10
+                    score += 10
                     enemies_killed_this_wave += 1
                     total_enemies_killed += 1
                     # Crear partículas
                     for _ in range(8):
                         particles.append(Particle(enemy.rect.centerx, enemy.rect.centery, ORANGE))
                     enemy.kill()
-            if not wave_complete:
-            enemies.add(Enemy())
         
         # Actualizar explosiones y partículas
         explosions = [e for e in explosions if e.update()]
@@ -2938,24 +2936,24 @@ def main_game():
                         explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
                         explosion_sound.play()
                 else:
-            player.lives -= 1
+                    player.lives -= 1
                     # Activar invencibilidad después de recibir daño (3 segundos = 180 frames)
                     player.activate_invincibility(180)
                     if explosion_sound:
                         explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
                         explosion_sound.play()
-            if player.lives == 0:
-                    pygame.mixer.music.stop()
-                    # Guardar registro de la partida
-                    save_game_record(score, wave, total_enemies_killed, combo_max)
-                    # Mostrar pantalla de Game Over
-                    show_game_over_screen()
-                    # Mostrar pantalla de estadísticas y obtener acción del usuario
-                    stats_action = show_game_stats_screen(score, wave, total_enemies_killed, combo_max)
-                    if stats_action == "restart":
-                        return "restart"
-                    else:
-                running = False
+                    if player.lives == 0:
+                        pygame.mixer.music.stop()
+                        # Guardar registro de la partida
+                        save_game_record(score, wave, total_enemies_killed, combo_max)
+                        # Mostrar pantalla de Game Over
+                        show_game_over_screen()
+                        # Mostrar pantalla de estadísticas y obtener acción del usuario
+                        stats_action = show_game_stats_screen(score, wave, total_enemies_killed, combo_max)
+                        if stats_action == "restart":
+                            return "restart"
+                        else:
+                            running = False
         
         # Dibujado
         screen.fill(BLACK)
