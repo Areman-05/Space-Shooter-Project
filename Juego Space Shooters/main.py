@@ -2793,8 +2793,9 @@ def main_game():
         if not wave_complete:
             enemy_spawn_timer += 1
             # Spawn rate más balanceado: reduce más gradualmente
-            # Mínimo de 25 frames entre spawns para evitar que sea imposible
-            base_spawn_rate = max(70 - (wave * 3), 25)
+            # Fórmula más suave: empieza en 70 frames y reduce 2.5 por onda
+            # Esto hace que sea más gradual y jugable
+            base_spawn_rate = max(70 - int(wave * 2.5), 25)
             # Límite máximo: nunca más rápido que 20 frames (aunque no debería alcanzarse)
             base_spawn_rate = max(base_spawn_rate, 20)
             if enemy_spawn_timer >= base_spawn_rate:
