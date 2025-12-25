@@ -188,6 +188,18 @@ class Player(pygame.sprite.Sprite):
             flash_alpha = int(100 + 155 * math.sin(self.invincibility_time / flash_rate))
             flash_alpha = max(60, min(255, flash_alpha))  # Limitar entre 60 y 255 para mejor visibilidad
             
+            # Efecto de resplandor durante invencibilidad
+            if int(self.invincibility_time / flash_rate) % 2 == 0:
+                # Dibujar resplandor exterior
+                glow_size = 5
+                glow_surface = pygame.Surface((self.rect.width + glow_size * 2, 
+                                             self.rect.height + glow_size * 2), pygame.SRCALPHA)
+                glow_alpha = int(100 * (flash_alpha / 255))
+                pygame.draw.ellipse(glow_surface, (255, 255, 255, glow_alpha),
+                                   (0, 0, self.rect.width + glow_size * 2, 
+                                    self.rect.height + glow_size * 2))
+                surface.blit(glow_surface, (self.rect.x - glow_size, self.rect.y - glow_size))
+            
             # Crear superficie con transparencia
             player_surface = pygame.Surface(self.image.get_size(), pygame.SRCALPHA)
             player_surface.set_alpha(flash_alpha)
