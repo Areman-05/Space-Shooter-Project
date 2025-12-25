@@ -183,9 +183,10 @@ class Player(pygame.sprite.Sprite):
         """Dibuja el jugador con efecto de transparencia si está invencible"""
         if self.invincible:
             # Efecto de parpadeo durante invencibilidad
-            flash_rate = 10  # Velocidad del parpadeo
-            flash_alpha = int(128 + 127 * math.sin(self.invincibility_time / flash_rate))
-            flash_alpha = max(50, min(255, flash_alpha))  # Limitar entre 50 y 255
+            # Parpadeo más rápido y visible
+            flash_rate = 8  # Velocidad del parpadeo (más rápido)
+            flash_alpha = int(100 + 155 * math.sin(self.invincibility_time / flash_rate))
+            flash_alpha = max(60, min(255, flash_alpha))  # Limitar entre 60 y 255 para mejor visibilidad
             
             # Crear superficie con transparencia
             player_surface = pygame.Surface(self.image.get_size(), pygame.SRCALPHA)
