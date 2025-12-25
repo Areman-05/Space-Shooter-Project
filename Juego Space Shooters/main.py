@@ -89,7 +89,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (50, 40))
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT - 50)
-        self.base_speed = 2
+        self.base_speed = 3
         self.speed = self.base_speed
         self.lives = 3
         
@@ -2605,7 +2605,7 @@ def show_game_stats_screen(score, wave, enemies_killed, combo_max):
                         return "main_menu"
                 elif event.key == K_ESCAPE:
                     return "main_menu"
-
+                    
 def show_controls_message():
     message = small_font.render("Controles: WASD para mover, ESPACIO para disparar", True, WHITE)
     screen.blit(message, (WIDTH // 2 - message.get_width() // 2, HEIGHT - 40))
@@ -2913,13 +2913,13 @@ def main_game():
                         explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
                         explosion_sound.play()
                 else:
-                    player.lives -= 1
+            player.lives -= 1
                     # Activar invencibilidad después de recibir daño (3 segundos = 180 frames)
                     player.activate_invincibility(180)
                     if explosion_sound:
                         explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
                         explosion_sound.play()
-                if player.lives == 0:
+            if player.lives == 0:
                     pygame.mixer.music.stop()
                     # Guardar registro de la partida
                     save_game_record(score, wave, total_enemies_killed, combo_max)
