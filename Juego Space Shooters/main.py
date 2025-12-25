@@ -105,6 +105,10 @@ class Player(pygame.sprite.Sprite):
         # Cooldowns
         self.shoot_cooldown = 0
         self.missile_cooldown = 0
+        
+        # Invincibility system
+        self.invincible = False
+        self.invincibility_time = 0
 
     def update(self, score):
         base_speed = self.base_speed + (score // 150)
@@ -133,6 +137,12 @@ class Player(pygame.sprite.Sprite):
             self.shoot_cooldown -= 1
         if self.missile_cooldown > 0:
             self.missile_cooldown -= 1
+        
+        # Update invincibility timer
+        if self.invincible:
+            self.invincibility_time -= 1
+            if self.invincibility_time <= 0:
+                self.invincible = False
         
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a] and self.rect.left > 0:
