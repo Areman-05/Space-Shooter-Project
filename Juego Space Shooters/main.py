@@ -2904,18 +2904,22 @@ def main_game():
         # Colisiones jugador-enemigos
         hits_player = pygame.sprite.spritecollide(player, enemies, True)
         if hits_player:
-            if player.shield_active:
-                player.shield_active = False
-                player.shield_time = 0
-                if explosion_sound:
-                    explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
-                    explosion_sound.play()
-            else:
-            player.lives -= 1
-                if explosion_sound:
-                    explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
-                    explosion_sound.play()
-            if player.lives == 0:
+            # Solo procesar daño si no está invencible
+            if not player.invincible:
+                if player.shield_active:
+                    player.shield_active = False
+                    player.shield_time = 0
+                    if explosion_sound:
+                        explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
+                        explosion_sound.play()
+                else:
+                    player.lives -= 1
+                    # Activar invencibilidad después de recibir daño (3 segundos = 180 frames)
+                    player.activate_invincibility(180)
+                    if explosion_sound:
+                        explosion_sound.set_volume(0.3)  # Reducir volumen al 30%
+                        explosion_sound.play()
+                if player.lives == 0:
                     pygame.mixer.music.stop()
                     # Guardar registro de la partida
                     save_game_record(score, wave, total_enemies_killed, combo_max)
