@@ -2792,7 +2792,8 @@ def main_game():
         # Spawn de enemigos basado en la onda
         if not wave_complete:
             enemy_spawn_timer += 1
-            base_spawn_rate = max(60 - (wave * 5), 15)
+            # Spawn rate más balanceado: reduce más gradualmente
+            base_spawn_rate = max(70 - (wave * 3), 25)
             if enemy_spawn_timer >= base_spawn_rate:
                 enemies.add(Enemy())
                 enemy_spawn_timer = 0
