@@ -175,7 +175,8 @@ class Player(pygame.sprite.Sprite):
         self.missiles_available += count
     
     def activate_invincibility(self, duration=180):
-        """Activa la invencibilidad por un tiempo determinado (en frames)"""
+        """Activa la invencibilidad por un tiempo determinado (en frames)
+        180 frames = 3 segundos a 60 FPS"""
         self.invincible = True
         self.invincibility_time = duration
     
