@@ -114,6 +114,9 @@ class Player(pygame.sprite.Sprite):
         # Progresión de velocidad más gradual (cada 300 puntos en lugar de 150)
         speed_bonus = (score // 300) * 0.5
         base_speed = self.base_speed + speed_bonus
+        # Límite máximo de velocidad base (sin boost)
+        max_base_speed = 6
+        base_speed = min(base_speed, max_base_speed)
         if self.speed_boost_active:
             self.speed = base_speed * 2.5
         else:
